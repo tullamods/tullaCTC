@@ -1,3 +1,3 @@
 # TullaCT
 
-Colorizes the built in Action Bar cooldown text based on time remaining
+Colorizes the built in cooldown text based on time remaining.

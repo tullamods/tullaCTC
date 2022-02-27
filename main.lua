@@ -1,11 +1,19 @@
-local DAY = 86400
-local MINUTE = 60
 local SECOND = 1
+local MINUTE = SECOND * 60
+local HOUR = MINUTE * 60
 
-local SETTINGS = {
-    {duration = 5.5 * SECOND, r = 1, g = 0, b = 0, a = 1},
-    {duration = 90.5 * SECOND, r = 1, g = 1, b = 0, a = 1},
-    {duration = DAY, r = 1, g = 1, b = 1, a = 1},
+-- TODO: move to saved settings
+local STYLES = {
+    -- 10s or less
+    {duration = 10 * SECOND, r = 1, g = 0, b = 0, a = 1},
+
+    -- 90s
+    {duration = 90 * SECOND, r = 1, g = 1, b = 0, a = 1},
+
+    -- hours
+    {duration = HOUR, r = 1, g = 1, b = 1, a = 1},
+
+    -- default case
     {duration = math.huge, r = 0.5, g = 0.5, b = 0.5, a = 1}
 }
 
@@ -31,26 +39,25 @@ local function updateText(cooldown)
     end
 
     local remain = cd.endTime - GetTime()
-    local prev = nil
+    local nextStyle = nil
 
-    for _, setting in ipairs(SETTINGS) do
+    for _, style in ipairs(STYLES) do
         -- apply colors for the earliest value we're under
-        if remain <= setting.duration then
-            fs:SetTextColor(setting.r, setting.g, setting.b, setting.a)
+        if remain <= style.duration then
+            fs:SetTextColor(style.r, style.g, style.b, style.a)
+            -- TODO: font/scale should be easy to apply, too
             break
-        -- and keep track of the previous one for scheduling updates
+        -- and keep track of the previous one, so that we know how long to
+        -- wait for the next style update
         else
-            prev = setting
+            nextStyle = style
         end
     end
 
-    -- schedule the next update, if we need to
-    if prev then
-        local sleep = math.max(remain - prev.duration, 0)
-
-        if sleep > 0 then
-            C_Timer.After(sleep, cd.update)
-        end
+    -- schedule the next update, if needed
+    local sleep = nextStyle and math.max(remain - nextStyle.duration, 0) or 0
+    if sleep > 0 then
+        C_Timer.After(sleep, cd.update)
     end
 end
 
@@ -80,6 +87,7 @@ local function setTimer(cooldown, start, duration)
         return
     end
 
+    -- TODO: test excluding GCD for perf/memory usage reasons
     local endTime = start + duration
 
     -- both the wow api and addons (especially auras) have a habit of resetting
