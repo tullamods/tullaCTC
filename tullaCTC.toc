@@ -1,0 +1,8 @@
+## Interface: 90200
+## Interface-BCC: 20502
+## Interface-Classic: 11402
+## Title: tullaCTC
+## Notes: Cooldown Text Colorizer
+## Author: Tuller
+## Version: @version@
+main.lua
