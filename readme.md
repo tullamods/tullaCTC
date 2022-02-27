@@ -1,3 +1,3 @@
-# TullaCT
+# TullaCTC
 
-Colorizes the built in cooldown text based on time remaining.
+Colorizes the built in Blizzard cooldown text based on time remaining.
