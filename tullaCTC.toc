@@ -2,7 +2,9 @@
 ## Interface-BCC: 20503
 ## Interface-Classic: 11402
 ## Title: tullaCTC
-## Notes: Cooldown Text Colorizer
+## Notes: Cooldown Text Customizer
 ## Author: Tuller
 ## Version: @version@
+## SavedVariables: tullaCTCDB
+embeds.xml
 main.lua

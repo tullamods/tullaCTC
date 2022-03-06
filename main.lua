@@ -1,21 +1,7 @@
-local SECOND = 1
-local MINUTE = SECOND * 60
-local HOUR = MINUTE * 60
-
--- TODO: move to saved settings
-local STYLES = {
-    -- 10s or less
-    {duration = 10 * SECOND, r = 1, g = 0, b = 0, a = 1},
-
-    -- 90s
-    {duration = 90 * SECOND, r = 1, g = 1, b = 0, a = 1},
-
-    -- hours
-    {duration = HOUR, r = 1, g = 1, b = 1, a = 1},
-
-    -- default case
-    {duration = math.huge, r = 0.5, g = 0.5, b = 0.5, a = 1}
-}
+local AddonName, AddonTable = ...
+local Addon = LibStub('AceAddon-3.0'):NewAddon(AddonTable, AddonName)
+local DB_NAME = AddonName .. 'DB'
+local DB_SCHEMA_VERSION = 1
 
 local cooldowns = {}
 
@@ -38,39 +24,43 @@ local function updateText(cooldown)
         return
     end
 
-    local remain = cd.endTime - GetTime()
-    local nextStyle = nil
+    local theme, sleep = Addon:GetTheme(cd)
+    if not theme then
+        return
+    end
 
-    for _, style in ipairs(STYLES) do
-        -- apply colors for the earliest value we're under
-        if remain <= style.duration then
-            fs:SetTextColor(style.r, style.g, style.b, style.a)
-            -- TODO: font/scale should be easy to apply, too
-            break
-        -- and keep track of the previous one, so that we know how long to
-        -- wait for the next style update
-        else
-            nextStyle = style
+    local tFontHeight = theme.fontScale * cd.fontHeight
+    local fontName, fontHeight, fontFlags = fs:GetFont()
+    if not (theme.fontName == fontName and fontHeight == tFontHeight and theme.fontFlags == fontFlags) then
+        if not fs:SetFont(theme.fontName, tFontHeight, theme.fontFlags) then
+            fs:SetFont(STANDARD_TEXT_FONT, tFontHeight, theme.fontFlags)
         end
     end
 
+    fs:SetTextColor(theme.r, theme.g, theme.b, theme.a)
+
+    local shadow = theme.shadow
+    fs:SetShadowColor(shadow.r, shadow.g, shadow.b, shadow.a)
+    fs:SetShadowOffset(shadow.x, shadow.y)
+
     -- schedule the next update, if needed
-    local sleep = nextStyle and math.max(remain - nextStyle.duration, 0) or 0
-    if sleep > 0 then
+    if sleep and sleep > 0 then
         C_Timer.After(sleep, cd.update)
     end
 end
 
--- setup initial data when we first wee a cooldown
+-- setup initial data when we first see a cooldown
 setmetatable(cooldowns, {
     __index = function(t, k)
-        local fontString = getFontStringFromRegions(k:GetRegions())
+        local fs = getFontStringFromRegions(k:GetRegions())
+        local _, fontHeight = fs:GetFont()
 
         local v = {
             update = function()
                 updateText(k)
             end,
-            fontString = fontString,
+            fontString = fs,
+            fontHeight = fontHeight,
             endTime = 0
         }
 
@@ -100,24 +90,129 @@ local function setTimer(cooldown, start, duration)
     end
 end
 
-local CooldownMT = getmetatable(ActionButton1Cooldown).__index
+function Addon:OnInitialize()
+    -- initialize db
+    local db = LibStub('AceDB-3.0'):New(DB_NAME, self:GetDBDefaults(), DEFAULT)
 
-hooksecurefunc(CooldownMT, 'SetCooldown', function(cd, start, duration)
-    if cd:IsForbidden() then
+    db.RegisterCallback(self, 'OnProfileChanged', 'OnProfileChanged')
+    db.RegisterCallback(self, 'OnProfileCopied', 'OnProfileChanged')
+    db.RegisterCallback(self, 'OnProfileReset', 'OnProfileChanged')
+
+    self.db = db
+
+    -- setup hooks
+    local cooldown_mt = getmetatable(ActionButton1Cooldown).__index
+
+    hooksecurefunc(cooldown_mt, 'SetCooldown', function(cd, start, duration)
+        if cd:IsForbidden() then
+            return
+        end
+
+        setTimer(cd, start or 0, duration or 0)
+    end)
+
+    hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cd)
+        if cd:IsForbidden() then
+            return
+        end
+
+        local start, duration = cd:GetCooldownTimes()
+        start = (start or 0) / 1000
+        duration = (duration or 0) / 1000
+
+        setTimer(cd, start, duration)
+    end)
+end
+
+function Addon:UpgradeDB()
+    local dbVersion = self.db.global.dbVersion
+
+    if dbVersion ~= DB_SCHEMA_VERSION then
+        self.db.global.dbVersion = DB_SCHEMA_VERSION
+    end
+
+    local addonVersion = self.db.global.addonVersion
+    if addonVersion ~= GetAddOnMetadata(AddonName, 'Version') then
+        self.db.global.addonVersion = GetAddOnMetadata(AddonName, 'Version')
+    end
+end
+
+function Addon:OnProfileChanged()
+    self:Refresh()
+end
+
+function Addon:GetDBDefaults()
+    return {
+        profile = {
+            themes = {
+                ['**'] = {
+                    -- what font to use (an actual path)
+                    fontName = STANDARD_TEXT_FONT,
+
+                    -- NONE | OUTLINE | THICKOUTLINE | MONOCHROME
+                    fontFlags = 'OUTLINE',
+
+                    fontScale = 1,
+
+                    -- text color
+                    r = 1,
+                    g = 1,
+                    b = 1,
+                    a = 1,
+
+                    -- shadow color and offset
+                    shadow = {
+                        -- color
+                        r = 1,
+                        g = 1,
+                        b = 1,
+                        a = 0,
+
+                        -- offset
+                        x = 0,
+                        y = 0
+                    }
+                },
+
+                soon = {r = 1, g = 0, b = 0, fontScale = 1.5},
+                seconds = {r = 1, g = 1, b = 0},
+                minutes = {r = 1, g = 1, b = 1},
+                hours = {r = .7, g = .7, b = .7, fontScale = .75}
+            },
+
+            -- rules, in eval order
+            rules = {
+                {duration = 5, theme = "soon"},
+                {duration = 60, theme = "seconds"},
+                {duration = 60 * 60, theme = "minutes"},
+                {duration = math.huge, theme = "hours"}
+            }
+        }
+    }
+end
+
+function Addon:GetTheme(cooldown)
+    local remain = cooldown.endTime - GetTime()
+    if remain <= 0 then
         return
     end
 
-    setTimer(cd, start or 0, duration or 0)
-end)
+    local nextRule
+    for _, rule in ipairs(self.db.profile.rules) do
+        if remain <= rule.duration then
+            if nextRule then
+                return self.db.profile.themes[rule.theme], remain - nextRule.duration
+            end
 
-hooksecurefunc(CooldownMT, 'SetCooldownDuration', function(cd)
-    if cd:IsForbidden() then
-        return
+            return self.db.profile.themes[rule.theme], 0
+        else
+            nextRule  = rule
+        end
     end
+end
 
-    local start, duration = cd:GetCooldownTimes()
-    start = (start or 0) / 1000
-    duration = (duration or 0) / 1000
-
-    setTimer(cd, start, duration)
-end)
+function Addon:Refresh()
+    for cooldown in pairs(cooldowns) do
+        updateText(cooldown)
+    end
+end
