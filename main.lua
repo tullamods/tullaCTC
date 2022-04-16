@@ -5,6 +5,31 @@ local DB_SCHEMA_VERSION = 1
 
 local cooldowns = {}
 
+-- handle floating point distance
+local function equalish(v1, v2, precision)
+    if v1 == v2 then
+        return true
+    end
+
+    if v1 == nil or v2 == nil then
+        return false
+    end
+
+    local factor = math.pow(10, precision);
+
+    return math.floor(v1 * factor + 0.5) == math.floor(v2 * factor + 0.5)
+end
+
+local function sanitizeModRate(value)
+    value = tonumber(value) or 0
+
+    if value <= 0 then
+        value = 1
+    end
+
+    return value
+end
+
 local function getFontStringFromRegions(...)
     for i = 1, select("#", ...) do
         local region = select(i, ...)
@@ -71,20 +96,22 @@ setmetatable(cooldowns, {
 })
 
 -- hooks
-local function setTimer(cooldown, start, duration)
+local function setTimer(cooldown, start, duration, modRate)
     -- skip zero duration cooldowns
-    if start <= 0 or duration <= 0 then
+    if start <= 0 or duration <= 0 or modRate <= 0 then
         return
     end
 
-    -- TODO: test excluding GCD for perf/memory usage reasons
     local endTime = start + duration
 
     -- both the wow api and addons (especially auras) have a habit of resetting
     -- cooldowns every time there's an update to an aura we chack and do nothing
     -- if there's an exact start/duration match
-    if cooldowns[cooldown].endTime ~= endTime then
-        cooldowns[cooldown].endTime = endTime
+    local cd = cooldowns[cooldown]
+
+    if not (equalish(endTime, cd.endTime, 3) and cd.modRate == modRate) then
+        cd.endTime = endTime
+        cd.modRate = modRate
 
         updateText(cooldown)
     end
@@ -103,24 +130,28 @@ function Addon:OnInitialize()
     -- setup hooks
     local cooldown_mt = getmetatable(ActionButton1Cooldown).__index
 
-    hooksecurefunc(cooldown_mt, 'SetCooldown', function(cd, start, duration)
+    hooksecurefunc(cooldown_mt, 'SetCooldown', function(cd, start, duration, modRate)
         if cd:IsForbidden() then
             return
         end
 
-        setTimer(cd, start or 0, duration or 0)
+        start = tonumber(start) or 0
+        duration = tonumber(duration) or 0
+        modRate = sanitizeModRate(modRate)
+
+        setTimer(cd, start, duration, modRate)
     end)
 
-    hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cd)
+    hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cd, duration, modRate)
         if cd:IsForbidden() then
             return
         end
 
-        local start, duration = cd:GetCooldownTimes()
-        start = (start or 0) / 1000
-        duration = (duration or 0) / 1000
+        local start = GetTime()
+        duration = tonumber(duration) or 0
+        modRate = sanitizeModRate(modRate)
 
-        setTimer(cd, start, duration)
+        setTimer(cd, start, duration, modRate)
     end)
 end
 
@@ -192,7 +223,7 @@ function Addon:GetDBDefaults()
 end
 
 function Addon:GetTheme(cooldown)
-    local remain = cooldown.endTime - GetTime()
+    local remain = (cooldown.endTime - GetTime()) / cooldown.modRate
     if remain <= 0 then
         return
     end
@@ -201,7 +232,7 @@ function Addon:GetTheme(cooldown)
     for _, rule in ipairs(self.db.profile.rules) do
         if remain <= rule.duration then
             if nextRule then
-                return self.db.profile.themes[rule.theme], remain - nextRule.duration
+                return self.db.profile.themes[rule.theme], (remain - nextRule.duration) * cooldown.modRate
             end
 
             return self.db.profile.themes[rule.theme], 0
