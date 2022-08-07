@@ -1,5 +1,3 @@
-## Interface: 90200
-
 ## Interface: 90205
 ## Interface-BCC: 20504
 ## Interface-Classic: 11403
