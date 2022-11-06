@@ -81,9 +81,7 @@ setmetatable(cooldowns, {
         local _, fontHeight = fs:GetFont()
 
         local v = {
-            update = function()
-                updateText(k)
-            end,
+            update = function() updateText(k) end,
             fontString = fs,
             fontHeight = fontHeight,
             endTime = 0
