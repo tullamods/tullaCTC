@@ -9,3 +9,6 @@ Desktop.ini
 
 # packager artifacts
 .release
+
+# visual studio code
+.vscode
