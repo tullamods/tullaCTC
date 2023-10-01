@@ -1,7 +1,6 @@
-## Interface: 100005
-## Interface-BCC: 20504
-## Interface-Classic: 11403
-## Interface-Wrath: 30401
+## Interface: 101007
+## Interface-Classic: 11404
+## Interface-Wrath: 30402
 ## Title: tullaCTC
 ## Notes: Cooldown Text Customizer
 ## Author: Tuller
