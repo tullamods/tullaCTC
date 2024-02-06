@@ -6,6 +6,6 @@
 ## Author: Tuller
 ## Version: @version@
 ## SavedVariables: tullaCTCDB
-## IconTexture: Interface/Icons/ability_druid_travelform
+## IconTexture: Interface/Icons/inv_misc_pocketwatch_02
 embeds.xml
 main.lua

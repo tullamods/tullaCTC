@@ -213,7 +213,7 @@ function Addon:GetDBDefaults()
             rules = {
                 {duration = 5, theme = "soon"},
                 {duration = 60, theme = "seconds"},
-                {duration = 60 * 60, theme = "minutes"},
+                {duration = 3600, theme = "minutes"},
                 {duration = math.huge, theme = "hours"}
             }
         }
