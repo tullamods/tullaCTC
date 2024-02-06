@@ -1,10 +1,11 @@
-## Interface: 100200
+## Interface: 100205
 ## Interface-Wrath: 30403
-## Interface-Classic: 11500
+## Interface-Classic: 11501
 ## Title: tullaCTC
 ## Notes: Cooldown Text Customizer
 ## Author: Tuller
 ## Version: @version@
 ## SavedVariables: tullaCTCDB
+## IconTexture: Interface/Icons/ability_druid_travelform
 embeds.xml
 main.lua
