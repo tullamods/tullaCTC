@@ -69,7 +69,10 @@ local function updateText(cooldown)
     fs:SetShadowOffset(shadow.x, shadow.y)
 
     -- schedule the next update, if needed
-    if sleep and sleep > 0 then
+    -- C_Timer.After has an upper limit, so we don't bother updating the timer
+    -- once it reaches the day threshold. (You probably shouldn't play WoW for 24 hours straight, 
+    -- so this is acceptable to me)
+    if sleep and sleep > 0 and sleep < 86400 then
         C_Timer.After(sleep, cd.update)
     end
 end
