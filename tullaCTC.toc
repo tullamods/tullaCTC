@@ -1,10 +1,21 @@
-## Interface: 110002, 100207, 40400
-## Interface-Vanilla: 11502
+## Interface: 120000, 110207, 110205, 50501, 11507
 ## Title: tullaCTC
 ## Notes: Cooldown Text Customizer
 ## Author: Tuller
-## Version: @version@
+## Version: @project-version@
 ## SavedVariables: tullaCTCDB
 ## IconTexture: Interface/Icons/inv_misc_pocketwatch_02
+## Category-enUS: Combat
+## Category-deDE: Kampf
+## Category-esES: Combate
+## Category-esMX: Combate
+## Category-frFR: Combat
+## Category-itIT: Combattimento
+## Category-koKR: 전투
+## Category-ptBR: Combate
+## Category-ruRU: Бой
+## Category-zhCN: 战斗
+## Category-zhTW: 戰鬥
 embeds.xml
+localization\default.lua
 main.lua

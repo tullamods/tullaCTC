@@ -1,33 +1,55 @@
-local AddonName, AddonTable = ...
-local Addon = LibStub('AceAddon-3.0'):NewAddon(AddonTable, AddonName)
+local AddonName, Addon = ...
 local DB_NAME = AddonName .. 'DB'
-local DB_SCHEMA_VERSION = 1
+local SECRETS_ENABLED = type(canaccessvalue) == "function"
+local L = Addon.L
 
-local cooldowns = {}
+local cooldownInfo = {}
 
 -- handle floating point distance
-local function equalish(v1, v2, precision)
-    if v1 == v2 then
+local function equalish(x, y, precision)
+    if x == y then
         return true
     end
 
-    if v1 == nil or v2 == nil then
+    if x == nil or y == nil then
         return false
     end
 
-    local factor = math.pow(10, precision);
-
-    return math.floor(v1 * factor + 0.5) == math.floor(v2 * factor + 0.5)
+    local scale = 10 ^ precision
+    return Round(x * scale) == Round(y * scale)
 end
 
-local function sanitizeModRate(value)
-    value = tonumber(value) or 0
+local function parseDurationFromText(text)
+    if text and text ~= "" then
+        local days, hours, minutes, seconds
 
-    if value <= 0 then
-        value = 1
+        seconds = tonumber(text)
+        if seconds then
+            return seconds
+        end
+
+        minutes, seconds = text:match(L.MMSS_PATTERN)
+        if minutes and seconds then
+            return tonumber(minutes) * 60 + tonumber(seconds)
+        end
+
+        minutes = text:match(L.MINUTES_PATTERN)
+        if minutes then
+            return tonumber(minutes) * 60
+        end
+
+        hours = text:match(L.HOURS_PATTERN)
+        if hours then
+            return tonumber(hours) * 3600
+        end
+
+        days = text:match(L.DAYS_PATTERN)
+        if days then
+            return tonumber(days) * 86400
+        end
     end
 
-    return value
+    return nil
 end
 
 local function getFontStringFromRegions(...)
@@ -41,62 +63,72 @@ local function getFontStringFromRegions(...)
 end
 
 local function updateText(cooldown)
-    local cd = cooldowns[cooldown]
+    local info = cooldownInfo[cooldown]
 
     -- no text, quit early
-    local fs = cd.fontString
-    if not fs and fs:GetText() ~= "" then
+    local fontString = info.fontString
+    if not fontString and fontString:GetText() ~= "" then
         return
     end
 
-    local theme, sleep = Addon:GetTheme(cd)
+    local theme, sleep = Addon:GetTheme(info)
     if not theme then
         return
     end
 
-    local tFontHeight = theme.fontScale * cd.fontHeight
-    local fontName, fontHeight, fontFlags = fs:GetFont()
+    local tFontHeight = theme.fontScale * info.fontHeight
+    local fontName, fontHeight, fontFlags = fontString:GetFont()
     if not (theme.fontName == fontName and fontHeight == tFontHeight and theme.fontFlags == fontFlags) then
-        if not fs:SetFont(theme.fontName, tFontHeight, theme.fontFlags) then
-            fs:SetFont(STANDARD_TEXT_FONT, tFontHeight, theme.fontFlags)
+        if not fontString:SetFont(theme.fontName, tFontHeight, theme.fontFlags) then
+            fontString:SetFont(STANDARD_TEXT_FONT, tFontHeight, theme.fontFlags)
         end
     end
 
-    fs:SetTextColor(theme.r, theme.g, theme.b, theme.a)
+    fontString:SetTextColor(theme.r, theme.g, theme.b, theme.a)
 
     local shadow = theme.shadow
-    fs:SetShadowColor(shadow.r, shadow.g, shadow.b, shadow.a)
-    fs:SetShadowOffset(shadow.x, shadow.y)
+    fontString:SetShadowColor(shadow.r, shadow.g, shadow.b, shadow.a)
+    fontString:SetShadowOffset(shadow.x, shadow.y)
 
-    -- schedule the next update, if needed
-    -- C_Timer.After has an upper limit, so we don't bother updating the timer
-    -- once it reaches the day threshold. (You probably shouldn't play WoW for 24 hours straight, 
-    -- so this is acceptable to me)
+    -- Schedule the next update, if needed. C_Timer.After has an upper limit, so
+    -- we don't bother updating the timer once it reaches the day threshold.(You
+    -- probably shouldn't play WoW for 24  hours straight, so this is acceptable
+    -- to me)
     if sleep and sleep > 0 and sleep < 86400 then
-        C_Timer.After(sleep, cd.update)
+        C_Timer.After(sleep, info.update)
     end
 end
 
 -- setup initial data when we first see a cooldown
-setmetatable(cooldowns, {
-    __index = function(t, k)
-        local fs = getFontStringFromRegions(k:GetRegions())
-        local _, fontHeight = fs:GetFont()
-
-        local v = {
-            update = function() updateText(k) end,
-            fontString = fs,
-            fontHeight = fontHeight,
-            endTime = 0
-        }
-
-        t[k] = v
-
-        return v
+local durationMap = setmetatable({}, {
+    __index = function(self, text)
+        local duration = parseDurationFromText(text)
+        self[text] = duration
+        return duration
     end
 })
 
--- hooks
+setmetatable(cooldownInfo, {
+    __index = function(self, cooldown)
+        local fontString = getFontStringFromRegions(cooldown:GetRegions())
+        local _, fontHeight = fontString:GetFont()
+
+        local info = {
+            update = function() updateText(cooldown) end,
+            fontString = fontString,
+            fontHeight = fontHeight,
+            endTime = 0,
+            parseDuration = function()
+                return durationMap[fontString:GetText() or ""]
+            end
+        }
+
+        self[cooldown] = info
+
+        return info
+    end
+})
+
 local function setTimer(cooldown, start, duration, modRate)
     -- skip zero duration cooldowns
     if start <= 0 or duration <= 0 or modRate <= 0 then
@@ -108,68 +140,100 @@ local function setTimer(cooldown, start, duration, modRate)
     -- both the wow api and addons (especially auras) have a habit of resetting
     -- cooldowns every time there's an update to an aura we chack and do nothing
     -- if there's an exact start/duration match
-    local cd = cooldowns[cooldown]
+    local info = cooldownInfo[cooldown]
 
-    if not (equalish(endTime, cd.endTime, 3) and cd.modRate == modRate) then
-        cd.endTime = endTime
-        cd.modRate = modRate
+    if not (equalish(endTime, info.endTime, 3) and info.modRate == modRate) then
+        info.endTime = endTime
+        info.modRate = modRate
 
         updateText(cooldown)
     end
 end
 
-function Addon:OnInitialize()
+local function scheduleSetTimer(cooldown)
+    local info = cooldownInfo[cooldown]
+
+    if not info.scheduled then
+        info.scheduled = true
+
+        C_Timer.After(GetTickTime(), function()
+            info.scheduled = nil
+
+            local duration = info.parseDuration()
+            if duration then
+                setTimer(cooldown, GetTime(), duration, 1)
+            end
+        end)
+    end
+end
+
+function Addon:OnLoad()
     -- initialize db
     local db = LibStub('AceDB-3.0'):New(DB_NAME, self:GetDBDefaults(), DEFAULT)
 
-    db.RegisterCallback(self, 'OnProfileChanged', 'OnProfileChanged')
-    db.RegisterCallback(self, 'OnProfileCopied', 'OnProfileChanged')
-    db.RegisterCallback(self, 'OnProfileReset', 'OnProfileChanged')
+    db.RegisterCallback(self, 'OnProfileChanged', 'Refresh')
+    db.RegisterCallback(self, 'OnProfileCopied', 'Refresh')
+    db.RegisterCallback(self, 'OnProfileReset', 'Refresh')
 
     self.db = db
 
     -- setup hooks
     local cooldown_mt = getmetatable(ActionButton1Cooldown).__index
 
-    hooksecurefunc(cooldown_mt, 'SetCooldown', function(cd, start, duration, modRate)
-        if cd:IsForbidden() then
-            return
-        end
+    if SECRETS_ENABLED then
+        hooksecurefunc(cooldown_mt, 'SetCooldown', function(cooldown, start, duration, modRate)
+            if cooldown:IsForbidden() then return end
 
-        start = tonumber(start) or 0
-        duration = tonumber(duration) or 0
-        modRate = sanitizeModRate(modRate)
+            if canaccessvalue(start) then
+                setTimer(cooldown, start or 0, duration or 0, modRate or 1)
+            else
+                duration = cooldownInfo[cooldown].parseDuration()
+                if duration then
+                    setTimer(cooldown, GetTime(), duration, 1)
+                else
+                    scheduleSetTimer(cooldown)
+                end
+            end
+        end)
 
-        setTimer(cd, start, duration, modRate)
-    end)
+        hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cooldown, duration, modRate)
+            if cooldown:IsForbidden() then return end
 
-    hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cd, duration, modRate)
-        if cd:IsForbidden() then
-            return
-        end
+            if canaccessvalue(duration) then
+                setTimer(cooldown, GetTime(), duration or 0, modRate or 1)
+            else
+                duration = cooldownInfo[cooldown].parseDuration()
+                if duration then
+                    setTimer(cooldown, GetTime(), duration, 1)
+                else
+                    scheduleSetTimer(cooldown)
+                end
+            end
+        end)
+    else
+        hooksecurefunc(cooldown_mt, 'SetCooldown', function(cd, start, duration, modRate)
+            if cd:IsForbidden() then return end
 
-        local start = GetTime()
-        duration = tonumber(duration) or 0
-        modRate = sanitizeModRate(modRate)
+            start = start or 0
+            duration = duration or 0
+            modRate = modRate or 1
 
-        setTimer(cd, start, duration, modRate)
-    end)
-end
+            setTimer(cd, start, duration, modRate)
+        end)
 
-function Addon:UpgradeDB()
-    local dbVersion = self.db.global.dbVersion
-    if dbVersion ~= DB_SCHEMA_VERSION then
-        self.db.global.dbVersion = DB_SCHEMA_VERSION
+        hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cd, duration, modRate)
+            if cd:IsForbidden() then return end
+
+            local start = GetTime()
+            duration = duration or 0
+            modRate = modRate or 1
+
+            setTimer(cd, start, duration, modRate)
+        end)
     end
 
-    local addonVersion = C_AddOns.GetAddOnMetadata(AddonName, 'Version')
-    if self.db.global.addonVersion ~= addonVersion then
-        self.db.global.addonVersion = addonVersion
-    end
-end
-
-function Addon:OnProfileChanged()
-    self:Refresh()
+    _G[AddonName] = self
+    self.OnLoad = nil
 end
 
 function Addon:GetDBDefaults()
@@ -205,25 +269,25 @@ function Addon:GetDBDefaults()
                     }
                 },
 
-                soon = {r = 1, g = 0, b = 0, fontScale = 1.5},
-                seconds = {r = 1, g = 1, b = 0},
-                minutes = {r = 1, g = 1, b = 1},
-                hours = {r = .7, g = .7, b = .7, fontScale = .75}
+                soon = { r = 1, g = 0, b = 0, fontScale = 1.5 },
+                seconds = { r = 1, g = 1, b = 0 },
+                minutes = { r = 1, g = 1, b = 1 },
+                hours = { r = .7, g = .7, b = .7, fontScale = .75 }
             },
 
             -- rules, in eval order
             rules = {
-                {duration = 5, theme = "soon"},
-                {duration = 60, theme = "seconds"},
-                {duration = 3600, theme = "minutes"},
-                {duration = math.huge, theme = "hours"}
+                { duration = 5,         theme = "soon" },
+                { duration = 60,        theme = "seconds" },
+                { duration = 3600,      theme = "minutes" },
+                { duration = math.huge, theme = "hours" }
             }
         }
     }
 end
 
-function Addon:GetTheme(cooldown)
-    local remain = (cooldown.endTime - GetTime()) / cooldown.modRate
+function Addon:GetTheme(cooldownInfo)
+    local remain = (cooldownInfo.endTime - GetTime()) / cooldownInfo.modRate
     if remain <= 0 then
         return
     end
@@ -232,18 +296,20 @@ function Addon:GetTheme(cooldown)
     for _, rule in ipairs(self.db.profile.rules) do
         if remain <= rule.duration then
             if nextRule then
-                return self.db.profile.themes[rule.theme], (remain - nextRule.duration) * cooldown.modRate
+                return self.db.profile.themes[rule.theme], (remain - nextRule.duration) * cooldownInfo.modRate
             end
 
             return self.db.profile.themes[rule.theme], 0
         else
-            nextRule  = rule
+            nextRule = rule
         end
     end
 end
 
 function Addon:Refresh()
-    for cooldown in pairs(cooldowns) do
+    for cooldown in pairs(cooldownInfo) do
         updateText(cooldown)
     end
 end
+
+EventUtil.ContinueOnAddOnLoaded(AddonName, function() Addon:OnLoad() end)

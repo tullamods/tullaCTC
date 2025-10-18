@@ -1,7 +1,10 @@
 package-as: tullaCTC
 
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
 externals:
-  libs/AceAddon-3.0: https://repos.wowace.com/wow/ace3/trunk/AceAddon-3.0
   libs/AceDB-3.0: https://repos.wowace.com/wow/ace3/trunk/AceDB-3.0
   libs/CallbackHandler-1.0: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
   libs/LibStub: https://repos.wowace.com/wow/libstub/tags/1.0
