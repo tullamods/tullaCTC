@@ -1,0 +1,13 @@
+## Interface: 120001, 120000
+## Title: tullaCTC
+## Notes: Cooldown Text Customizer
+## Author: Tuller
+## Version: @project-version@
+## SavedVariables: tullaCTCDB
+## IconTexture: Interface/Icons/inv_misc_pocketwatch_02
+## Category: Combat
+embeds.xml
+theme.lua
+api.lua
+rules.lua
+main.lua

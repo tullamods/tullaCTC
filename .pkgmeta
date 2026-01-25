@@ -1,10 +1,20 @@
 package-as: tullaCTC
 
+move-folders:
+  tullaCTC/tullaCTC: tullaCTC
+  tullaCTC/tullaCTC_Config: tullaCTC_Config
+
 manual-changelog:
   filename: CHANGELOG.md
   markup-type: markdown
 
 externals:
-  libs/AceDB-3.0: https://repos.wowace.com/wow/ace3/trunk/AceDB-3.0
-  libs/CallbackHandler-1.0: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
-  libs/LibStub: https://repos.wowace.com/wow/libstub/tags/1.0
+  tullaCTC_Config/libs/AceConfig-3.0: https://repos.wowace.com/wow/ace3/trunk/AceConfig-3.0
+  tullaCTC_Config/libs/AceDBOptions-3.0: https://repos.wowace.com/wow/ace3/trunk/AceDBOptions-3.0
+  tullaCTC_Config/libs/AceGUI-3.0-SharedMediaWidgets: https://repos.curseforge.com/wow/ace-gui-3-0-shared-media-widgets/trunk/AceGUI-3.0-SharedMediaWidgets
+  tullaCTC_Config/libs/AceGUI-3.0: https://repos.wowace.com/wow/ace3/trunk/AceGUI-3.0
+  tullaCTC/libs/AceDB-3.0: https://repos.wowace.com/wow/ace3/trunk/AceDB-3.0
+  tullaCTC/libs/AceLocale-3.0: https://repos.wowace.com/wow/ace3/trunk/AceLocale-3.0
+  tullaCTC/libs/CallbackHandler-1.0: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+  tullaCTC/libs/LibSharedMedia-3.0: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
+  tullaCTC/libs/LibStub: https://repos.wowace.com/wow/libstub/tags/1.0

@@ -1,0 +1,13 @@
+## Interface: 120001, 120000
+## Title: tullaCTC Config
+## Notes: tullaCTC's configuration menu
+## Author: Tuller
+## Dependencies: tullaCTC
+## LoadOnDemand: 1
+## IconTexture: Interface/Icons/inv_misc_pocketwatch_02
+embeds.xml
+localization\localization.xml
+preview.lua
+themes.lua
+rules.lua
+options.lua

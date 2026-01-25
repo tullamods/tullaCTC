@@ -1,38 +1,99 @@
 # TullaCTC - Cooldown Text Customizer
 
-Color and scales the built in Blizzard cooldown count text based on time remaining, doing the following:
-
-* Timers under five seconds are displayed in red, and made a bit larger
-* Timers under a minute are displayed in yellow
-* Timers under an hour are displayed in white
-* Timers over an hour are displayed in grey, and made a bit smaller
+Customizes the built in Blizzard Cooldown Count text. Works in World of Warcraft
+v12.0.x. Classic versions are unsupported.
 
 ## FAQ
 
-### Can I make changes to the colors? 
+### How Complete is the Addon?
 
-Yes, but only via saved varables editing at the moment. Refer to https://github.com/tullamods/tullaCTC/blob/c284ab455c00b9c84cd0c4686c30e932dedb257a/main.lua#L175
+I'd say its in a beta/alpha state.
 
-### How does this differ from OmniCC or tullaCC?
+### Where's the GUI?
 
-tullaCTC lets the default UI handle updating cooldown time remaining. OmniCC handles that itself. Because of this, tullaCTC has a much simpler job. Using a simple ten second cooldown as example. Here's what happens:
+`/tullaCTC` or `/tctc`
 
-| Duration | OmniCC      | tullaCTC |
-| -------- | ----------- | ----- |
-| 10       | Initialize  | Initialize |
-| 9        | Update text | Sleep |
-| 8        | Update text | Sleep |
-| 7        | Update text | Sleep |
-| 6        | Update text | Sleep |
-| 5        | Update text, color to red, size to 1.5x | Update color to red, size to 1.5x |
-| 4        | Update text | Sleep |
-| 3        | Update text | Sleep |
-| 2        | Update text | Sleep |
-| 1        | Update text | Sleep |
-| 0        | Stop        | Stop  |
+NOTE: The GUI is currently an automated translation of OmniCC's GUI. It needs
+a bit of work.
 
-As you can see, OmniCC is updating at every transition point from one number to the next (ex 10 to 9). tullaCTC only needs to update when going from displaying text in yellow to displaying text larger and in red (at the 5 second point). Overall, you can expect tullaCTC to use a lot less CPU time.
+### What are the limitations?
 
-### Are there any limitations?
+You can change the initial font, anchor, and conditional colors of any cooldown
+that tullaCTC can retrieve a Duration object about. Providers can be defined
+using the following API method:
 
-The addon will only work on cooldowns that display the standard Blizzard cooldown text. By default, this is limited to action buttons and inventory slots. If you want to show cooldown text on other things (ex auras), OmniCC is still your best bet.
+```lua
+-- returns: isMatch, duration object
+tullaCTC:RegisterDurationProvider {
+    id = "action",
+    priority = 100,
+    handle = function(cooldown)
+        local actionID = tullaCTC.GetActionID(cooldown)
+        if actionID then
+            local key = cooldown:GetParentKey()
+
+            if key == "chargeCooldown" then
+                return true, C_ActionBar.GetActionChargeDuration(actionID)
+            end
+
+            if key == "lossOfControlCooldown" then
+                return true, C_ActionBar.GetActionLossOfControlCooldownDuration(actionID)
+            end
+
+            return true, C_ActionBar.GetActionCooldownDuration(actionID)
+        end
+
+        return false
+    end
+}
+```
+
+tullaCTC will always first try to retrieve information by composing it from
+set cooldown, but only works when the information is not secret. Because of this,
+the addon doesn't quite work for every cooldown scenario.
+
+The following things cannot be done based upon cooldown durations at the moment
+
+- Resizing text
+- Formatting durations differently (ex, showing tenths of seconds under 5s).
+  It is possible to set the threshold for MM:SS at least
+
+Additionally, because I cannot retrieve the duration of a cooldown, we must
+instead rely on a global loop to refresh the apperance of cooldowns. This is
+much less efficient than the prior tullaCTC verison, but shouldn't be awful.
+
+### How do I define new rules?
+
+Here's the API. I'll likely make a text pattern option available in the GUI at
+some point:
+
+```lua
+tullaCTC:RegisterThemeRule {
+    id = "blizzard_action",
+    priority = 100,
+    displayName = "Action Bars",
+    -- just a convieneence
+    match = tullaCTC.MatchName(
+        "^ActionButton%d+",
+        "^MultiBarBottomLeftButton%d+",
+        "^MultiBarBottomRightButton%d+",
+        "^MultiBarRightButton%d+",
+        "^MultiBarLeftButton%d+",
+        "^MultiBar5Button%d+",
+        "^MultiBar6Button%d+",
+        "^MultiBar7Button%d+"
+    )
+}
+```
+
+```lua
+tullaCTC:RegisterThemeRule {
+    id = "blizzard_action_recharging",
+    priority = 100,
+    displayName = "Action Bars (Recharging)",
+    match = function(cooldown)
+        return cooldown:GetParent().action
+           and cooldown:GetParentKey() == "chargeCooldown
+    end
+}
+```
