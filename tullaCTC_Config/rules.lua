@@ -20,7 +20,7 @@ end
 local function createRuleOptions(rule, order)
     return {
         type = 'group',
-        name = rule.displayName or rule.id,
+        name = rawget(L, "Rule_" .. rule.id) or rule.displayName or rule.id,
         order = order,
         inline = true,
         args = {
@@ -82,11 +82,8 @@ function Addon:RefreshRuleOptions()
         end
     end
 
-    local order = 100
-    for rule in tullaCTC:IterateThemeRules() do
-        local key = 'rule_' .. rule.id
-        RuleOptions.args[key] = createRuleOptions(rule, order)
-        order = order + 1
+    for i, rule in tullaCTC:IterateRules() do
+        RuleOptions.args['rule_' .. rule.id] = createRuleOptions(rule, 100 + i)
     end
 
     LibStub("AceConfigRegistry-3.0"):NotifyChange("tullaCTC")

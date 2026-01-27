@@ -1,104 +1,84 @@
 local _, Addon = ...
 
--- Theme Rules API
--- Rules are evaluated in priority order (lower = first), first match wins
+local rules = {}
+local durationProviders = {}
 
---- @class ThemeRule
+--------------------------------------------------------------------------------
+-- Rules API
+--
+-- Rules categorize cooldowns into different groups
+-- Users can then assign themes to those groups
+--------------------------------------------------------------------------------
+
+--- @class Rule
 --- @field id string Unique rule ID (used to look up settings in profile.rules)
 --- @field priority number Priority order (lower values are checked first)
 --- @field match fun(cooldown: Cooldown): boolean Function that returns true if the rule applies
---- @field theme? string Fallback theme if not configured in profile.rules
 --- @field displayName? string Optional display name for the rule
---- @field builtin? boolean If true, rule defaults to enabled; custom rules default to disabled
+--- @field enabled? boolean Default enabled state for the rule.
 
-local themeRules = {}
-
---- Registers a theme rule for cooldown styling.
+--- Registers a rule for categorizing cooldowns.
 --- Rules are evaluated in priority order (lower = first), first match wins.
---- @param rule ThemeRule Rule definition table
-function Addon:RegisterThemeRule(rule)
+--- @param rule Rule Rule definition table
+function Addon:RegisterRule(rule)
     assert(type(rule) == "table", "rule must be a table")
     assert(type(rule.id) == "string", "rule.id must be a string")
     assert(type(rule.priority) == "number", "rule.priority must be a number")
-    assert(type(rule.match) == "function", "rule.match must be a function")
-    assert(rule.theme == nil or type(rule.theme) == "string", "rule.theme must be a string or nil")
+    assert(rule.match ~= nil, "rule.match is required")
     assert(rule.displayName == nil or type(rule.displayName) == "string", "rule.displayName must be a string or nil")
 
-    for _, r in pairs(themeRules) do
+    for _, r in pairs(rules) do
         assert(r.id ~= rule.id, format("a rule with id %q already exists", rule.id))
     end
 
     -- insert at sorted position
-    local index = #themeRules + 1
-    for i, r in ipairs(themeRules) do
+    local index = #rules + 1
+    for i, r in ipairs(rules) do
         if rule.priority < r.priority then
             index = i
             break
         end
     end
-    table.insert(themeRules, index, rule)
+
+    tinsert(rules, index, {
+        id = rule.id,
+        priority = rule.priority,
+        match = rule.match,
+        displayName = rule.displayName,
+        enabled = rule.enabled
+    })
 end
 
 --- @param id string Unique identifier of the rule to remove
-function Addon:UnregisterThemeRule(id)
+function Addon:UnregisterRule(id)
     assert(type(id) == "string", "id must be a string")
 
-    for i, r in pairs(themeRules) do
+    for i, r in pairs(rules) do
         if r.id == id then
-            table.remove(themeRules, i)
+            tremove(rules, i)
             return
         end
     end
 end
 
---- Checks if a rule is enabled.
---- Built-in rules default to enabled, custom rules default to disabled.
---- @param rule ThemeRule The rule to check
---- @return boolean enabled Whether the rule is enabled
-function Addon:IsRuleEnabled(rule)
-    local settings = self.db and self.db.profile.rules[rule.id]
-    if settings and settings.enabled ~= nil then
-        return settings.enabled
-    end
-    -- Default: builtin rules are enabled, custom rules are disabled
-    return rule.builtin == true
+--- Iterates over all registered rules in priority order.
+function Addon:IterateRules()
+    return ipairs(rules)
 end
 
---- Gets the theme name for a cooldown by evaluating registered rules.
---- @param cooldown Cooldown The cooldown frame to evaluate
---- @return string themeName The name of the matching theme, or "default" if no rules match
-function Addon:GetThemeName(cooldown)
-    for _, rule in ipairs(themeRules) do
-        if self:IsRuleEnabled(rule) and rule.match(cooldown) then
-            -- Look up theme from profile, fall back to rule.theme or "default"
-            local settings = self.db and self.db.profile.rules[rule.id]
-            local theme = settings and settings.theme
-            return theme or rule.theme or "default"
-        end
-    end
-
-    return "default"
-end
-
---- Iterates over all registered theme rules in priority order.
---- @return fun(): ThemeRule? iterator
-function Addon:IterateThemeRules()
-    local i = 0
-    return function()
-        i = i + 1
-        return themeRules[i]
-    end
-end
-
+--------------------------------------------------------------------------------
 -- Duration Provider API
--- Providers are evaluated in priority order (lower = first), first match wins
+--
+-- A centralized way to retrieve duration objects from cooldowns
+-- We need this in WoW 12.0.X+ because the various Cooldown:SetCooldown methods
+-- may contain secret args.
+--------------------------------------------------------------------------------
+
 --- @class DurationProvider
 --- @field id string Unique identifier for the provider
 --- @field priority number Priority order (lower values are checked first)
---- @field handle fun(cooldown: Cooldown): (success: boolean, duration: DurationObject?)
+--- @field handle fun(cooldown: Cooldown): (success: boolean, duration: DurationObject | nil)
 --- @field displayName? string Optional display name for the provider
-
-local durationProviders = {}
 
 --- Registers a duration provider for cooldown timing.
 --- Providers are evaluated in priority order (lower = first), first match wins.
@@ -200,61 +180,3 @@ function Addon.GetSpellID(cooldown)
         return parent.spell or parent:GetAttribute("spell")
     end
 end
-
---------------------------------------------------------------------------------
--- Builtin Duration Providers
---------------------------------------------------------------------------------
-
-Addon:RegisterDurationProvider {
-    id = "forbid",
-    priority = 0,
-    handle = function(cooldown)
-        return cooldown:IsForbidden()
-    end
-}
-
-Addon:RegisterDurationProvider {
-    id = "action",
-    priority = 100,
-    handle = function(cooldown)
-        local actionID = Addon.GetActionID(cooldown)
-        if actionID then
-            local key = cooldown:GetParentKey()
-
-            if key == "chargeCooldown" then
-                return true, C_ActionBar.GetActionChargeDuration(actionID)
-            end
-
-            if key == "lossOfControlCooldown" then
-                return true, C_ActionBar.GetActionLossOfControlCooldownDuration(actionID)
-            end
-
-            return true, C_ActionBar.GetActionCooldownDuration(actionID)
-        end
-
-        return false
-    end
-}
-
-Addon:RegisterDurationProvider {
-    id = "spell",
-    priority = 200,
-    handle = function(cooldown)
-        local spellID = Addon.GetSpellID(cooldown)
-        if spellID then
-            local key = cooldown:GetParentKey()
-
-            if key == "chargeCooldown" then
-                return true, C_Spell.GetSpellChargeDuration(spellID)
-            end
-
-            if key == "lossOfControlCooldown" then
-                return true, C_Spell.GetSpellLossOfControlCooldownDuration(spellID)
-            end
-
-            return true, C_Spell.GetSpellCooldownDuration(spellID)
-        end
-
-        return false
-    end
-}
