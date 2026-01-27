@@ -2,8 +2,8 @@
 
 ## NOTE: This addon is a bit of a work in progress and needs more testing.
 
-tullaCTC is a World of Warcraft addon that provides additional options for theming Blizzard's builtin cooldown count text. 
-It is built to work with the new secrets APIs that are a part of World of Warcraft Midnight (and probably later expansions). 
+tullaCTC is a World of Warcraft addon that provides additional options for theming Blizzard's builtin cooldown count text.
+It is built to work with the new secrets APIs that are a part of World of Warcraft Midnight (and probably later expansions).
 
 The configuration UI can be brought up via `/tullaCTC`
 
@@ -15,25 +15,25 @@ The configuration UI can be brought up via `/tullaCTC`
 | Font | Implemented | Face, Size, Outline, Shadow |
 | Timer Offset | Not Implemented | tullaCTC cannot modify the actual duration being displayed |
 | Scale Text | Not Implemented | TBD |
-| Min Size | Not Implemented | I amy not implement this one, as tullaCTC's rules engine is a bit better to work with |
+| Min Size | Not Implemented | I may not implement this one, as tullaCTC's rules engine is a bit better to work with |
 | Min Duration | Implemented | Automatic GCD filtering isn't implemented, but base duration filtering is |
 | Max Duration | Not Implemented | At the very least, should be able to make the text transparent when over a certain duration |
 | Tenths of Seconds | Not Implemented | There's not enough presentational options available for me to do this quite yet, I think |
-| MM:SS Duration | Implemented | | 
-| Text Position | Implemented |
+| MM:SS Duration | Implemented | |
+| Text Position | Implemented | |
 | Cooldown Opacity | Not Implemented | TBD |
 | Conditional Coloring | Implemented | Ex, red when soon to expire |
-| Conditional Scaling  | Not Implemented | Ex, slightly smaller when a longer duration. APIs are not there to be able to implement this | 
+| Conditional Scaling  | Not Implemented | Ex, slightly smaller when a longer duration. APIs are not there to be able to implement this |
 | Finish Effects | Not Implemented | TBD |
 
-Additonally, tullaCTC has to rely upon a simple periodic loop to handle updates. 
+Additionally, tullaCTC has to rely upon a simple periodic loop to handle updates.
 OmniCC, being able to know the actual duration of a cooldown, was able to schedule things a bit more smartly. I don't think
-this will have a super major implact on CPU usage, but its going to a bit more constant than OmniCC was.
+this will have a super major impact on CPU usage, but it's going to be a bit more constant than OmniCC was.
 
-### The Durations Provider API
+### The Duration Provider API
 
 tullaCTC needs to be able to retrieve a [duration object](https://warcraft.wiki.gg/wiki/ScriptObject_DurationObject) in order to implement
-conditional coloring. When a cooldown is initially started, the addon will try and create one from the cooldown information itself, but 
+conditional coloring. When a cooldown is initially started, the addon will try and create one from the cooldown information itself, but
 that'll only work if the information is not secret. To work around this, the addon implements a duration provider API:
 
 ```lua
@@ -67,14 +67,14 @@ This is one of the reasons that tullaCTC is tullaCTC and not OmniCTC. tullaCTC w
 
 ### The Rules API
 
-tullaCTC has a Lua API to define cooldown groups and let users map them to themes. 
+tullaCTC has a Lua API to define cooldown groups and let users map them to themes.
 You can use either pattern matching based upon ancestor names:
 
 ```lua
-tullaCTC:RegisterThemeRule {
+tullaCTC:RegisterRule {
     id = "blizzard_action",
     priority = 100,
-    displayName = "Action Bars",
+    displayName = "Action Buttons",
     match = tullaCTC.MatchName(
         "^ActionButton%d+",
         "^MultiBarBottomLeftButton%d+",
@@ -88,20 +88,19 @@ tullaCTC:RegisterThemeRule {
 }
 ```
 
-Or use a prdicate function that takes the cooldown itself as the first argument.
+Or use a predicate function that takes the cooldown itself as the first argument.
 
 ```lua
--- Allows for styling 
-tullaCTC:RegisterThemeRule {
+-- Allows for styling
+tullaCTC:RegisterRule {
     id = "blizzard_action_recharging",
-    priority = 100,
-    displayName = "Action Bars (Recharging)",
+    priority = 110,
+    displayName = "Action Buttons - Charge",
     match = function(cooldown)
         local parent = cooldown:GetParent()
         return parent
            and parent.action
-           and cooldown:GetParentKey() == "chargeCooldown
+           and cooldown:GetParentKey() == "chargeCooldown"
     end
 }
 ```
-I may rename the API to something like `tullaCTC:RegisterCooldownGroup` in the future. tullaCTC comes with some builtin groups already.
