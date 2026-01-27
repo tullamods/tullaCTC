@@ -3,16 +3,13 @@ local DB_NAME = AddonName .. 'DB'
 
 local active = {}
 local hooked = {}
-local themes = setmetatable({}, {
-    __index = function(t, themeName)
-        if not themeName then return end
+local themers = setmetatable({}, {
+    __index = function(t, k)
+        local themer = Addon.CreateThemer(Addon.db.profile.themes[k])
 
-        local settings =  Addon.db.profile.themes[themeName]
-        local theme = Addon.CreateTheme(settings)
+        t[k] = themer
 
-        t[themeName] = theme
-
-        return theme
+        return themer
     end
 })
 
@@ -37,43 +34,37 @@ function Addon:OnLoad()
     self.db = db
 
     -- setup hooks
-    local startCooldown, stopCooldown, refreshCooldown
+    local initCooldown, stopCooldown, refreshCooldown
 
-    startCooldown = function(cooldown, durationObject)
-        if not durationObject then return end
-
+    initCooldown = function(cooldown, durationObject)
         if not hooked[cooldown] then
             cooldown:HookScript("OnShow", refreshCooldown)
             cooldown:HookScript("OnHide", stopCooldown)
             hooked[cooldown] = true
         end
 
-        local themeName = self:GetThemeName(cooldown)
-        if not themeName then return end
-
-        local fontString = cooldown:GetCountdownFontString()
-        if not fontString then return end
-
-        local cooldownInfo = active[cooldown]
-        if not cooldownInfo then
-            cooldownInfo = {
-                cooldown = cooldown,
-                duration = durationObject,
-                themeName = themeName,
-                fontString = fontString
-            }
-
-            active[cooldown] = cooldownInfo
-        else
-            cooldownInfo.duration = durationObject
-            cooldownInfo.themeName = themeName
+        local theme = self:GetThemeName(cooldown)
+        if not theme then
+            return
         end
 
-        local theme = themes[themeName]
-        theme:Apply(cooldownInfo)
-        theme:UpdateColor(cooldownInfo)
+        local cdInfo = active[cooldown]
+        if not cdInfo then
+            cdInfo = {
+                cooldown = cooldown,
+                duration = durationObject,
+                theme = theme,
+            }
 
-        if not self.ticker then
+            active[cooldown] = cdInfo
+        else
+            cdInfo.duration = durationObject
+            cdInfo.theme = theme
+        end
+
+        themers[theme]:Apply(cdInfo)
+
+        if durationObject and not self.ticker then
             self:StartTicker()
         end
     end
@@ -88,7 +79,7 @@ function Addon:OnLoad()
 
     refreshCooldown = function(cooldown)
         if not (active[cooldown] or cooldown:IsForbidden()) then
-            startCooldown(cooldown, Addon:GetDuration(cooldown))
+            initCooldown(cooldown, Addon:GetDuration(cooldown))
         end
     end
 
@@ -105,7 +96,7 @@ function Addon:OnLoad()
             durationObject = Addon:GetDuration(cooldown)
         end
 
-        startCooldown(cooldown, durationObject)
+        initCooldown(cooldown, durationObject)
     end)
 
     hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cooldown, duration, modRate)
@@ -119,13 +110,13 @@ function Addon:OnLoad()
             durationObject = Addon:GetDuration(cooldown)
         end
 
-        startCooldown(cooldown, durationObject)
+        initCooldown(cooldown, durationObject)
     end)
 
     hooksecurefunc(cooldown_mt, 'SetCooldownFromDurationObject', function(cooldown, durationObject)
         if cooldown:IsForbidden() then return end
 
-        startCooldown(cooldown, durationObject)
+        initCooldown(cooldown, durationObject)
     end)
 
     hooksecurefunc(cooldown_mt, 'SetCooldownFromExpirationTime', function(cooldown, expirationTime, duration, modRate)
@@ -139,7 +130,7 @@ function Addon:OnLoad()
             durationObject = self:GetDuration(cooldown)
         end
 
-        startCooldown(cooldown, durationObject)
+        initCooldown(cooldown, durationObject)
     end)
 
     hooksecurefunc(cooldown_mt, 'Clear', stopCooldown)
@@ -167,7 +158,7 @@ function Addon:OnLoad()
 
     -- setup slash commands
     SlashCmdList[AddonName] = showOptionsFrame
-    SLASH_tullaCTC1 = '/tullactc'
+    SLASH_tullaCTC1 = '/' .. AddonName:lower()
     SLASH_tullaCTC2 = '/tctc'
 end
 
@@ -175,41 +166,72 @@ function Addon:GetDBDefaults()
     return {
         profile = {
             themes = {
-                -- defaults inherited by all themes
                 ['**'] = {
+                    -- global theme toggle
+                    enabled = true,
+
+                    -- basic on/of switches for styling groups
+                    themeText = true,
+                    themeCooldown = false,
+
+                    -- draw states
+                    -- "default" | "always" | "never"
+                    drawBling = "default",
+                    drawEdge = "default",
+                    drawSwipe = "default",
+                    drawText = "default",
+                    reverse = "default",
+
+                    -- cooldown text font settings
+                    -- font is a LSM font ID
                     font = "Friz Quadrata TT",
                     fontFlags = 'OUTLINE',
                     fontSize = 18,
+
+                    -- text positioning
                     point = "CENTER",
                     offsetX = 0,
                     offsetY = 0,
-                    forceShowText = true,
 
+                    -- text shadow
                     shadowColor = "FFFFFF00",
                     shadowX = 0,
                     shadowY = 0,
-                    abbrevThreshold = 90,
+
+                    -- how long a cooldown must be in order to display text
                     minDuration = 3,
-                    curves = {
-                        color = {
-                            [5] = "FF6347FF",
-                            [60] = "FFFF00FF",
-                            [3600] = "FFFFFFFF",
-                            [14400] = "AAAAAAFF"
-                        }
-                    }
+
+                    -- this currently controls the MM:SS display duration
+                    abbrevThreshold = 90,
+
+                    -- array of {threshold, color} entries
+                    -- thresholds are specified in seconds and represent the
+                    -- duration at which we want to start applying a color
+                    textColors = {},
                 },
 
+                -- default styling with conditional colors
                 default = {
-                    displayName = DEFAULT
+                    displayName = DEFAULT,
+
+                    textColors = {
+                        -- soon (0 - 5s)
+                        { threshold = 5, color = "FF6347FF" },
+                        -- minute (5 to 60)
+                        { threshold = 60, color = "FFFF00FF" },
+                        -- hours (61 to 3600)
+                        { threshold = 3600, color = "FFFFFFFF" },
+                        -- the rest (3600+)
+                        { threshold = math.huge, color = "AAAAAAFF" },
+                    }
                 }
             },
 
+            -- rule to theme mapping
             rules = {
-                -- defaults inherited by all rules
-                ['**'] = {
-                    theme = "default",
-                    enabled = true
+                ['*'] = {
+                    enabled = nil,
+                    theme = "default"
                 }
             }
         }
@@ -234,17 +256,35 @@ function Addon:StopTicker()
 end
 
 function Addon:UpdateAll()
-    for _, cooldownInfo in pairs(active) do
-        local theme = themes[cooldownInfo.themeName]
-        theme:UpdateColor(cooldownInfo)
+    for _, cdInfo in pairs(active) do
+        themers[cdInfo.theme]:UpdateColor(cdInfo)
     end
 end
 
+function Addon:GetThemeName(cooldown)
+    for _, rule in self:IterateRules() do
+        if self:IsRuleEnabled(rule) and rule.match(cooldown) then
+            local settings = self.db.profile.rules[rule.id]
+            return settings and settings.theme or "default"
+        end
+    end
+
+    return "default"
+end
+
+function Addon:IsRuleEnabled(rule)
+    local config = self.db.profile.rules[rule.id]
+    if config.enabled ~= nil then
+        return config.enabled
+    end
+    return rule.enabled == true
+end
+
 function Addon:Refresh()
-    wipe(themes)
+    wipe(themers)
 
     for _, cooldownInfo in pairs(active) do
-        local theme = themes[cooldownInfo.themeName]
+        local theme = themers[cooldownInfo.themeName]
         theme:Apply(cooldownInfo)
     end
 end

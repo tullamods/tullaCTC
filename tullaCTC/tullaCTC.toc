@@ -7,7 +7,8 @@
 ## IconTexture: Interface/Icons/inv_misc_pocketwatch_02
 ## Category: Combat
 embeds.xml
-theme.lua
 api.lua
+durations.lua
 rules.lua
+themer.lua
 main.lua
