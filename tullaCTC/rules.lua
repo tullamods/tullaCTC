@@ -5,7 +5,7 @@ local _, Addon = ...
 -- Rules categorize cooldowns; themes are assigned via profile settings
 --------------------------------------------------------------------------------
 
--- Action Bars (Blizzard)
+-- Action Buttons
 Addon:RegisterRule {
     id = "action",
     priority = 100,
@@ -68,6 +68,14 @@ Addon:RegisterRule {
     match = Addon.MatchName("^ZoneAbilityFrame")
 }
 
+-- Inventory Frame
+Addon:RegisterRule {
+    id = "blizzard_container",
+    priority = 800,
+    match = Addon.MatchName("^ContainerFrame")
+}
+
+-- TODO: Need to write better functions for evaluating target frame stuff
 -- Target Frame
 Addon:RegisterRule {
     id = "blizzard_target",
@@ -75,12 +83,8 @@ Addon:RegisterRule {
     match = Addon.MatchName("^TargetFrame")
 }
 
--- Inventory Frame
-Addon:RegisterRule {
-    id = "blizzard_container",
-    priority = 800,
-    match = Addon.MatchName("^ContainerFrame")
-}
+-- TODO: cooldown manager
+-- TODO: nameplates
 
 -- This rule technically does not need to be defined, but is implemented to
 -- make it a bit easier to turn tullaCTC into an allow list
