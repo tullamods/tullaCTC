@@ -41,7 +41,7 @@ end
 
 -- themer objects are created to precompute of the properties we want to set on
 -- cooldowns to make things a tad bit more efficient
-function Addon.CreateThemer(config)
+function Addon:CreateThemer(config)
     if not config.enabled then
         return NOOP
     end

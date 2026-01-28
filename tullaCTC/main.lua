@@ -5,7 +5,7 @@ local active = {}
 local hooked = {}
 local themers = setmetatable({}, {
     __index = function(t, k)
-        local themer = Addon.CreateThemer(Addon.db.profile.themes[k])
+        local themer = Addon:CreateThemer(Addon.db.profile.themes[k])
 
         t[k] = themer
 
@@ -284,8 +284,8 @@ function Addon:Refresh()
     wipe(themers)
 
     for _, cooldownInfo in pairs(active) do
-        local theme = themers[cooldownInfo.themeName]
-        theme:Apply(cooldownInfo)
+        local themer = themers[cooldownInfo.theme]
+        themer:Apply(cooldownInfo)
     end
 end
 
