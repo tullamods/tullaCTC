@@ -11,7 +11,7 @@ The configuration UI can be brought up via `/tullaCTC`
 
 | Feature | Status | Notes |
 | ------- | ------ | ----- |
-| Enable Text | Not Implemented | It will be a Force Enable/Force Disable dropdown in tullaCTC |
+| Enable Text | Implemented | Force hide, show, or default (let the rest of the UI handle it) |
 | Font | Implemented | Face, Size, Outline, Shadow |
 | Timer Offset | Not Implemented | tullaCTC cannot modify the actual duration being displayed |
 | Scale Text | Not Implemented | TBD |
