@@ -207,7 +207,9 @@ function Addon:GetDBDefaults()
                     -- array of {threshold, color} entries
                     -- thresholds are specified in seconds and represent the
                     -- duration at which we want to start applying a color
-                    textColors = {},
+                    textColors = {
+                        { threshold = math.huge, color = "FFFFFFFF" },
+                    },
                 },
 
                 -- default styling with conditional colors
@@ -224,6 +226,11 @@ function Addon:GetDBDefaults()
                         -- the rest (3600+)
                         { threshold = math.huge, color = "AAAAAAFF" },
                     }
+                },
+
+                disable = {
+                    displayName = DISABLE,
+                    enabled  = false
                 }
             },
 
@@ -257,7 +264,15 @@ end
 
 function Addon:UpdateAll()
     for _, cdInfo in pairs(active) do
-        themers[cdInfo.theme]:UpdateColor(cdInfo)
+        local theme = cdInfo.them
+        if theme then
+            themers[theme]:UpdateColor(cdInfo)
+        else
+            active[cdInfo.cooldown] = nil
+            if next(active) == nil then
+                self:StopTicker()
+            end
+        end
     end
 end
 
@@ -280,12 +295,18 @@ function Addon:IsRuleEnabled(rule)
     return rule.enabled == true
 end
 
+-- TODO: debounce, probably
 function Addon:Refresh()
     wipe(themers)
 
     for _, cooldownInfo in pairs(active) do
-        local themer = themers[cooldownInfo.theme]
-        themer:Apply(cooldownInfo)
+        local theme = self:GetThemeName(cooldownInfo.cooldown)
+
+        cooldownInfo.theme = theme
+
+        if theme then
+            themers[theme]:Apply(cooldownInfo)
+        end
     end
 end
 

@@ -7,6 +7,8 @@
 ## IconTexture: Interface/Icons/inv_misc_pocketwatch_02
 embeds.xml
 localization\localization.xml
+utils.lua
+settings.lua
 preview.lua
 themes.lua
 rules.lua

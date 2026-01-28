@@ -1,23 +1,34 @@
 local _, Addon = ...
 local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
 local LSM = LibStub('LibSharedMedia-3.0')
-local tullaCTC = _G.tullaCTC
 
-local function hexToRGBA(hex)
-    local r = tonumber(hex:sub(1, 2), 16) / 255
-    local g = tonumber(hex:sub(3, 4), 16) / 255
-    local b = tonumber(hex:sub(5, 6), 16) / 255
-    local a = tonumber(hex:sub(7, 8), 16) / 255
-    return r, g, b, a
+-- Track the currently selected theme
+local selectedThemeId = "default"
+
+local function getSelectedThemeId()
+    return selectedThemeId
 end
 
-local function rgbaToHex(r, g, b, a)
-    return string.format("%02X%02X%02X%02X",
-        Round(r * 255),
-        Round(g * 255),
-        Round(b * 255),
-        Round(a * 255)
-    )
+local function setSelectedThemeId(id)
+    if Addon:ThemeExists(id) then
+        selectedThemeId = id
+        return true
+    end
+    return false
+end
+
+local function getSelectedTheme()
+    return Addon:GetTheme(selectedThemeId)
+end
+
+local function getThemeValues()
+    local values = {}
+    for id, theme in pairs(Addon:GetThemes()) do
+        if id ~= '**' then
+            values[id] = theme.displayName or id
+        end
+    end
+    return values
 end
 
 local function createTextOptionsForTheme(theme, order)
@@ -36,57 +47,34 @@ local function createTextOptionsForTheme(theme, order)
                     face = {
                         type = 'select',
                         name = L.FontFace,
-                        order = 1,
-                        width = 1.5,
+                        order = 100,
                         dialogControl = 'LSM30_Font',
                         values = LSM:HashTable('font'),
                         get = function()
-                            for key, font in pairs(LSM:HashTable('font')) do
-                                if theme.font == key then
-                                    return key
-                                end
-                            end
                             return theme.font
                         end,
                         set = function(_, key)
-                            theme.font = key
-                            tullaCTC:Refresh()
-                        end
-                    },
-                    size = {
-                        type = 'range',
-                        name = L.FontSize,
-                        order = 3,
-                        width = 'full',
-                        min = 8,
-                        softMax = 36,
-                        step = 1,
-                        get = function()
-                            return theme.fontSize
+                            Addon:SetThemeProperty(theme, 'font', key)
                         end,
-                        set = function(_, val)
-                            theme.fontSize = val
-                            tullaCTC:Refresh()
-                        end
                     },
-                    outline = {
-                        type = 'select',
+                    outline = Addon:CreateSelectOption(theme, 'fontFlags', {
                         name = L.FontOutline,
-                        order = 2,
-                        get = function()
-                            return theme.fontFlags or 'OUTLINE'
-                        end,
-                        set = function(_, val)
-                            theme.fontFlags = val
-                            tullaCTC:Refresh()
-                        end,
+                        order = 200,
+                        default = 'OUTLINE',
                         values = {
                             [''] = L.Outline_NONE,
                             OUTLINE = L.Outline_OUTLINE,
                             THICKOUTLINE = L.Outline_THICKOUTLINE,
                             ['OUTLINE, MONOCHROME'] = L.Outline_OUTLINEMONOCHROME
                         }
-                    }
+                    }),
+                    size = Addon:CreateRangeOption(theme, 'fontSize', {
+                        name = L.FontSize,
+                        order = 300,
+                        width = 'full',
+                        min = 0,
+                        softMax = 36
+                    }),
                 }
             },
             shadow = {
@@ -95,50 +83,27 @@ local function createTextOptionsForTheme(theme, order)
                 inline = true,
                 order = 10,
                 args = {
-                    color = {
-                        type = 'color',
+                    color = Addon:CreateColorOption(theme, 'shadowColor', {
                         name = L.TextShadowColor,
                         order = 1,
                         width = 1.5,
-                        hasAlpha = true,
-                        get = function()
-                            return hexToRGBA(theme.shadowColor or "00000000")
-                        end,
-                        set = function(_, r, g, b, a)
-                            theme.shadowColor = rgbaToHex(r, g, b, a)
-                            tullaCTC:Refresh()
-                        end
-                    },
-                    x = {
-                        order = 2,
-                        type = 'range',
+                        default = "00000000"
+                    }),
+                    x = Addon:CreateRangeOption(theme, 'shadowX', {
                         name = L.HorizontalOffset,
+                        order = 2,
                         softMin = -4,
                         softMax = 4,
-                        step = 1,
-                        get = function()
-                            return theme.shadowX or 0
-                        end,
-                        set = function(_, val)
-                            theme.shadowX = val
-                            tullaCTC:Refresh()
-                        end
-                    },
-                    y = {
-                        order = 3,
-                        type = 'range',
+                        width = 'full'
+                    }),
+                    y = Addon:CreateRangeOption(theme, 'shadowY', {
                         name = L.VerticalOffset,
+                        order = 3,
                         softMin = -4,
                         softMax = 4,
-                        step = 1,
-                        get = function()
-                            return -(theme.shadowY or 0)
-                        end,
-                        set = function(_, val)
-                            theme.shadowY = -val
-                            tullaCTC:Refresh()
-                        end
-                    }
+                        invert = true,
+                        width = 'full'
+                    })
                 }
             },
             position = {
@@ -147,18 +112,11 @@ local function createTextOptionsForTheme(theme, order)
                 inline = true,
                 order = 20,
                 args = {
-                    anchor = {
-                        type = 'select',
-                        width = 1.5,
+                    anchor = Addon:CreateSelectOption(theme, 'point', {
                         name = L.Anchor,
                         order = 0,
-                        get = function()
-                            return theme.point or 'CENTER'
-                        end,
-                        set = function(_, val)
-                            theme.point = val
-                            tullaCTC:Refresh()
-                        end,
+                        width = 1.5,
+                        default = 'CENTER',
                         values = {
                             TOPLEFT = L.Anchor_TOPLEFT,
                             TOP = L.Anchor_TOP,
@@ -170,243 +128,249 @@ local function createTextOptionsForTheme(theme, order)
                             BOTTOM = L.Anchor_BOTTOM,
                             BOTTOMRIGHT = L.Anchor_BOTTOMRIGHT
                         }
-                    },
-                    x = {
-                        order = 2,
-                        type = 'range',
+                    }),
+                    x = Addon:CreateRangeOption(theme, 'offsetX', {
                         name = L.HorizontalOffset,
+                        order = 2,
                         softMin = -18,
                         softMax = 18,
-                        step = 1,
-                        get = function()
-                            return theme.offsetX or 0
-                        end,
-                        set = function(_, val)
-                            theme.offsetX = val
-                            tullaCTC:Refresh()
-                        end
-                    },
-                    y = {
-                        order = 3,
-                        type = 'range',
+                        width = 'full'
+                    }),
+                    y = Addon:CreateRangeOption(theme, 'offsetY', {
                         name = L.VerticalOffset,
+                        order = 3,
                         softMin = -18,
                         softMax = 18,
-                        step = 1,
-                        get = function()
-                            return -(theme.offsetY or 0)
-                        end,
-                        set = function(_, val)
-                            theme.offsetY = -val
-                            tullaCTC:Refresh()
-                        end
-                    }
+                        invert = true,
+                        width = 'full'
+                    })
                 }
             }
         }
     }
 end
 
-local function createDisplayOptionsForTheme(theme, order)
+local function createGeneralOptionsForTheme(theme, order)
     return {
         type = 'group',
-        name = L.Display,
-        desc = L.DisplayGroupDesc,
+        name = L.General,
         order = order,
         args = {
-            cooldownText = {
+            enabled = Addon:CreateToggleOption(theme, 'enabled', {
+                name = L.ThemeEnabled,
+                desc = L.ThemeEnabledDesc,
+                order = 0,
+                width = 'full'
+            }),
+            textOptions = {
                 type = 'group',
                 name = L.CooldownText,
                 inline = true,
                 order = 100,
                 args = {
-                    forceShowText = {
-                        type = 'toggle',
-                        name = L.ForceShowText,
-                        desc = L.ForceShowTextDesc,
+                    themeText = Addon:CreateToggleOption(theme, 'themeText', {
+                        name = L.ThemeText,
+                        desc = L.ThemeTextDesc,
+                        order = 0,
+                        width = 'full'
+                    }),
+
+                    drawText = Addon:CreateDrawStateOption(theme, 'drawText', {
+                        name = L.DrawText,
+                        desc = L.DrawTextDesc,
                         order = 10,
-                        width = 'full',
-                        get = function()
-                            return theme.forceShowText
-                        end,
-                        set = function(_, enable)
-                            theme.forceShowText = enable
-                            tullaCTC:Refresh()
-                        end
-                    },
-                    minDuration = {
-                        type = 'range',
+                    }),
+                    minDuration = Addon:CreateRangeOption(theme, 'minDuration', {
                         name = L.MinDuration,
                         desc = L.MinDurationDesc,
-                        width = 'full',
                         order = 20,
                         min = 0,
                         softMax = 60,
-                        step = 1,
-                        get = function()
-                            return theme.minDuration or 3
-                        end,
-                        set = function(_, val)
-                            theme.minDuration = val
-                            tullaCTC:Refresh()
-                        end
-                    },
-                    abbrevThreshold = {
-                        type = 'range',
+                        default = 3,
+                        width = 'full'
+                    }),
+                    abbrevThreshold = Addon:CreateRangeOption(theme, 'abbrevThreshold', {
                         name = L.AbbrevThreshold,
                         desc = L.AbbrevThresholdDesc,
-                        width = 'full',
                         order = 30,
                         min = 0,
                         softMax = 600,
-                        step = 1,
-                        get = function()
-                            return theme.abbrevThreshold or 90
-                        end,
-                        set = function(_, val)
-                            theme.abbrevThreshold = val
-                            tullaCTC:Refresh()
-                        end
-                    }
+                        default = 90,
+                        width = 'full'
+                    })
+                }
+            },
+            cooldownOptions = {
+                type = 'group',
+                name = L.Cooldown,
+                desc = L.CooldownDesc,
+                inline = true,
+                order = 200,
+                args = {
+                    themeCooldown = Addon:CreateToggleOption(theme, 'themeCooldown', {
+                        name = L.ThemeCooldown,
+                        desc = L.ThemeCooldownDesc,
+                        order = 0,
+                        width = 'full'
+                    }),
+
+                    drawSwipe = Addon:CreateDrawStateOption(theme, 'drawSwipe', {
+                        name = L.DrawSwipe,
+                        desc = L.DrawSwipeDesc,
+                        order = 100
+                    }),
+
+                    drawEdge = Addon:CreateDrawStateOption(theme, 'drawEdge', {
+                        name = L.DrawEdge,
+                        desc = L.DrawEdgeDesc,
+                        order = 120,
+                    }),
+
+                    drawBling = Addon:CreateDrawStateOption(theme, 'drawBling', {
+                        name = L.DrawBling,
+                        desc = L.DrawBlingDesc,
+                        order = 130
+                    }),
+
+                    reverse = Addon:CreateDrawStateOption(theme, 'reverse', {
+                        name = L.Reverse,
+                        desc = L.ReverseDesc,
+                        order = 140
+                    })
                 }
             }
         }
     }
 end
 
--- Fixed thresholds for color curve (in seconds)
-local COLOR_THRESHOLDS = {
-    soon = 5,
-    seconds = 60,
-    minutes = 3600,
-    hours = 14400,
-}
-
-local COLOR_DEFAULTS = {
-    soon = "FF0000FF",
-    seconds = "FFFF00FF",
-    minutes = "FFFFFFFF",
-    hours = "AAAAAAFF",
-}
-
 local function createColorOptionsForTheme(theme, order)
-    local function getColorCurve()
-        return theme.curves and theme.curves.color or {}
-    end
-
-    local function getColor(key)
-        local threshold = COLOR_THRESHOLDS[key]
-        local curve = getColorCurve()
-        return curve[threshold] or COLOR_DEFAULTS[key]
-    end
-
-    local function setColor(key, hex)
-        local threshold = COLOR_THRESHOLDS[key]
-        theme.curves = theme.curves or {}
-        theme.curves.color = theme.curves.color or {}
-        theme.curves.color[threshold] = hex
-        tullaCTC:Refresh()
-    end
-
-    return {
+    local options = {
         type = 'group',
         name = L.Colors,
         desc = L.ColorsDesc,
         order = order,
         args = {
-            soon = {
-                type = 'color',
-                name = L.ColorSoon,
-                order = 10,
-                hasAlpha = true,
-                get = function()
-                    return hexToRGBA(getColor("soon"))
-                end,
-                set = function(_, r, g, b, a)
-                    setColor("soon", rgbaToHex(r, g, b, a))
-                end
+            description = {
+                type = 'description',
+                name = L.ColorsDescription,
+                order = 0
             },
-            seconds = {
-                type = 'color',
-                name = L.ColorSeconds,
-                order = 20,
-                hasAlpha = true,
-                get = function()
-                    return hexToRGBA(getColor("seconds"))
-                end,
-                set = function(_, r, g, b, a)
-                    setColor("seconds", rgbaToHex(r, g, b, a))
-                end
-            },
-            minutes = {
-                type = 'color',
-                name = L.ColorMinutes,
-                order = 30,
-                hasAlpha = true,
-                get = function()
-                    return hexToRGBA(getColor("minutes"))
-                end,
-                set = function(_, r, g, b, a)
-                    setColor("minutes", rgbaToHex(r, g, b, a))
-                end
-            },
-            hours = {
-                type = 'color',
-                name = L.ColorHours,
-                order = 40,
-                hasAlpha = true,
-                get = function()
-                    return hexToRGBA(getColor("hours"))
-                end,
-                set = function(_, r, g, b, a)
-                    setColor("hours", rgbaToHex(r, g, b, a))
-                end
+            addThreshold = {
+                type = 'group',
+                name = L.AddColorThreshold,
+                inline = true,
+                order = 1,
+                args = {
+                    newThreshold = {
+                        type = 'input',
+                        name = L.NewThresholdValue,
+                        desc = L.NewThresholdValueDesc,
+                        order = 1,
+                        width = 1.2,
+                        get = function() return "" end,
+                        set = function(_, val)
+                            local threshold = Addon:ParseThreshold(val)
+                            if threshold and Addon:AddTextColor(theme, threshold) then
+                                Addon:RefreshThemeOptions()
+                            end
+                        end,
+                        validate = function(_, val)
+                            return Addon:ValidateThreshold(val)
+                        end
+                    }
+                }
             }
         }
     }
-end
 
-local function addThemeOptions(owner, theme, id)
-    local key = 'theme_' .. id
+    local textColors = Addon:GetTextColors(theme)
+    local prevThreshold = nil
 
-    local args = {
-        display = createDisplayOptionsForTheme(theme, 100),
-        text = createTextOptionsForTheme(theme, 200),
-        colors = createColorOptionsForTheme(theme, 300),
-        preview = {
-            type = 'execute',
-            order = 9000,
-            name = L.Preview,
-            func = function()
-                Addon.PreviewDialog:SetTheme(id)
-            end
+    for i, entry in ipairs(textColors) do
+        local threshold = entry.threshold
+
+        options.args["color_" .. i] = {
+            type = 'group',
+            name = Addon:FormatEffectiveRange(prevThreshold, threshold),
+            inline = true,
+            order = 10 + i,
+            args = {
+                threshold = {
+                    type = 'input',
+                    name = L.Threshold,
+                    desc = L.ThresholdDesc,
+                    order = 1,
+                    width = 0.8,
+                    get = function()
+                        local textColor = Addon:GetTextColorEntry(theme, i)
+                        if textColor then
+                            return Addon:FormatThreshold(textColor.threshold)
+                        end
+                        return ""
+                    end,
+                    set = function(_, val)
+                        local newThreshold = Addon:ParseThreshold(val)
+                        if newThreshold and Addon:SetTextColorThreshold(theme, i, newThreshold) then
+                            Addon:RefreshThemeOptions()
+                        end
+                    end,
+                    validate = function(_, val)
+                        return Addon:ValidateThreshold(val)
+                    end
+                },
+                color = {
+                    type = 'color',
+                    name = L.TextColor,
+                    order = 2,
+                    width = 1,
+                    hasAlpha = true,
+                    get = function()
+                        local textColor = Addon:GetTextColorEntry(theme, i)
+                        if textColor then
+                            return Addon:HexToRGBA(textColor.color)
+                        end
+                        return 1, 1, 1, 1
+                    end,
+                    set = function(_, r, g, b, a)
+                        Addon:SetTextColorValue(theme, i, r, g, b, a)
+                    end
+                },
+                remove = {
+                    type = 'execute',
+                    name = L.RemoveThreshold,
+                    order = 3,
+                    width = 0.6,
+                    confirm = true,
+                    confirmText = L.RemoveThresholdConfirm,
+                    func = function()
+                        if Addon:RemoveTextColor(theme, i) then
+                            Addon:RefreshThemeOptions()
+                        end
+                    end
+                }
+            }
         }
-    }
 
-    -- Add delete button for non-default themes
-    if id ~= "default" then
-        args.delete = {
-            type = 'execute',
-            order = 9100,
-            name = L.DeleteTheme,
-            desc = L.DeleteThemeDesc,
-            confirm = function()
-                return L.DeleteThemeConfirm:format(theme.displayName or id)
-            end,
-            func = function()
-                tullaCTC.db.profile.themes[id] = nil
-                Addon:RefreshThemeOptions()
-                tullaCTC:Refresh()
-            end
-        }
+        prevThreshold = threshold
     end
 
-    owner.args[key] = {
-        type = 'group',
-        name = theme.displayName or id,
-        order = id == "default" and 0 or 200,
-        childGroups = 'tab',
-        args = args
+    return options
+end
+
+local function addSelectedThemeOptions(owner)
+    local theme = getSelectedTheme()
+    if not theme then return end
+
+    owner.args.display = createGeneralOptionsForTheme(theme, 100)
+    owner.args.text = createTextOptionsForTheme(theme, 200)
+    owner.args.colors = createColorOptionsForTheme(theme, 300)
+    owner.args.preview = {
+        type = 'execute',
+        order = 9000,
+        name = L.Preview,
+        func = function()
+            Addon.PreviewDialog:SetTheme(selectedThemeId)
+        end
     }
 end
 
@@ -414,52 +378,160 @@ local ThemeOptions = {
     type = 'group',
     name = L.Themes,
     args = {
-        description = {
-            type = 'description',
-            name = L.ThemesDesc,
-            order = 0
+        toolbar = {
+            type = 'group',
+            name = "",
+            inline = true,
+            order = 0,
+            args = {
+                theme = {
+                    type = 'select',
+                    name = L.SelectTheme,
+                    order = 1,
+                    width = 1.5,
+                    values = getThemeValues,
+                    get = getSelectedThemeId,
+                    set = function(_, id)
+                        if setSelectedThemeId(id) then
+                            Addon:RefreshThemeOptions()
+                        end
+                    end
+                }
+            }
         },
-        add = {
-            type = 'input',
-            order = 1,
-            name = L.CreateTheme,
-            desc = L.CreateThemeDesc,
-            width = 'double',
-            set = function(_, val)
-                val = strtrim(val)
-                if val == '' then
-                    return
-                end
+        manage = {
+            type = 'group',
+            name = L.ManageThemes,
+            order = 500,
+            args = {
+                create = {
+                    type = 'input',
+                    order = 100,
+                    name = L.CreateTheme,
+                    desc = L.CreateThemeDesc,
+                    get = function() return "" end,
+                    set = function(_, val)
+                        val = strtrim(val)
+                        if val ~= '' then
+                            local newId = Addon:CreateTheme(val)
+                            if newId then
+                                setSelectedThemeId(newId)
+                                Addon:RefreshThemeOptions()
+                            end
+                        end
+                    end,
+                    validate = function(_, val)
+                        val = strtrim(val)
+                        return val ~= "" and not Addon:ThemeExists('custom_' .. val)
+                    end
+                },
 
-                local key = 'custom_' .. val
-                if rawget(tullaCTC.db.profile.themes, key) then
-                    return
-                end
+                copy = {
+                    type = 'input',
+                    name = L.CopyTheme,
+                    desc = L.CopyThemeDesc,
+                    order = 200,
+                    get = function() return "" end,
+                    set = function(_, val)
+                        val = strtrim(val)
+                        if val ~= '' then
+                            local newId = Addon:CreateTheme(val, getSelectedThemeId())
+                            if newId then
+                                setSelectedThemeId(newId)
+                                Addon:RefreshThemeOptions()
+                            end
+                        end
+                    end,
+                    validate = function(_, val)
+                        val = strtrim(val)
+                        return val ~= "" and not Addon:ThemeExists('custom_' .. val)
+                    end
+                },
 
-                tullaCTC.db.profile.themes[key].displayName = val
-                Addon:RefreshThemeOptions()
-            end,
-            validate = function(_, val)
-                val = strtrim(val)
-                return not (val == "" or rawget(tullaCTC.db.profile.themes, 'custom_' .. val))
-            end
+                modifySection = {
+                    type = 'header',
+                    name = '',
+                    order = 250
+                },
+
+                rename = {
+                    type = 'input',
+                    name = L.RenameTheme,
+                    desc = L.RenameThemeDesc,
+                    order = 300,
+                    disabled = function()
+                        return selectedThemeId == "default"
+                    end,
+                    get = function()
+                        local theme = getSelectedTheme()
+                        return theme and theme.displayName or selectedThemeId
+                    end,
+                    set = function(_, val)
+                        val = strtrim(val)
+                        if val ~= '' and Addon:RenameTheme(selectedThemeId, val) then
+                            Addon:RefreshThemeOptions()
+                        end
+                    end
+                },
+
+                dangerSection = {
+                    type = 'header',
+                    name = '',
+                    order = 350
+                },
+
+                reset = {
+                    type = 'execute',
+                    name = L.ResetTheme,
+                    desc = L.ResetThemeDesc,
+                    order = 400,
+                    confirm = function()
+                        local theme = getSelectedTheme()
+                        return L.ResetThemeConfirm:format(theme and theme.displayName or selectedThemeId)
+                    end,
+                    func = function()
+                        if Addon:ResetTheme(selectedThemeId) then
+                            Addon:RefreshThemeOptions()
+                        end
+                    end
+                },
+
+                delete = {
+                    type = 'execute',
+                    name = L.DeleteTheme,
+                    desc = L.DeleteThemeDesc,
+                    order = 500,
+                    disabled = function()
+                        return selectedThemeId == "default"
+                    end,
+                    confirm = function()
+                        local theme = getSelectedTheme()
+                        return L.DeleteThemeConfirm:format(theme and theme.displayName or selectedThemeId)
+                    end,
+                    func = function()
+                        if Addon:DeleteTheme(selectedThemeId) then
+                            setSelectedThemeId("default")
+                            Addon:RefreshThemeOptions()
+                        end
+                    end
+                }
+            }
         }
     }
 }
 
+local STATIC_GROUPS = { toolbar = true, manage = true }
+
 function Addon:RefreshThemeOptions()
+    -- Clear existing theme options (preserve static groups)
     for key in pairs(ThemeOptions.args) do
-        if key:match('^theme_') then
+        if not STATIC_GROUPS[key] then
             ThemeOptions.args[key] = nil
         end
     end
 
-    local themes = tullaCTC.db.profile.themes
-    for id, theme in pairs(themes) do
-        if id ~= '**' then
-            addThemeOptions(ThemeOptions, theme, id)
-        end
-    end
+    -- Add options for the selected theme
+    addSelectedThemeOptions(ThemeOptions)
 
     LibStub("AceConfigRegistry-3.0"):NotifyChange("tullaCTC")
 end
