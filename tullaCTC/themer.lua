@@ -109,8 +109,7 @@ function Addon.CreateThemer(config)
                 end
 
                 if textColors and cdInfo.duration then
-                    local color = cdInfo.duration:EvaluateRemainingDuration(textColors)
-                    text:SetTextColor(color:GetRGBA())
+                    text:SetTextColor(cdInfo.duration:EvaluateRemainingDuration(textColors):GetRGBA())
                 else
                     text:SetTextColor(1, 1, 1, 1)
                 end
@@ -151,6 +150,9 @@ function Addon.CreateThemer(config)
             if reverse ~= nil then
                 cooldown:SetReverse(reverse)
             end
+
+            -- TODO: consider the other mutable properties of cooldowns
+            -- like swipe, bling, and edge textures
         end
     end
 
