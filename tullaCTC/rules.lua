@@ -6,6 +6,7 @@ local _, Addon = ...
 --------------------------------------------------------------------------------
 
 -- Action Buttons
+-- TODO: will likely provide a way to combine handlers like these into a single function call for perf
 Addon:RegisterRule {
     id = "action",
     priority = 100,
@@ -17,7 +18,7 @@ Addon:RegisterRule {
 
 Addon:RegisterRule {
     id = "action_charge",
-    priority = 110,
+    priority = 102,
     match = function(cooldown)
         local parent = cooldown:GetParent()
         return parent and parent.action and cooldown:GetParentKey() == "chargeCooldown"
@@ -26,12 +27,16 @@ Addon:RegisterRule {
 
 Addon:RegisterRule {
     id = "action_loc",
-    priority = 110,
+    priority = 103,
     match = function(cooldown)
         local parent = cooldown:GetParent()
         return parent and parent.action and cooldown:GetParentKey() == "lossOfControlCooldown"
     end
 }
+
+--------------------------------------------------------------------------------
+-- Secondary Bars
+--------------------------------------------------------------------------------
 
 -- Pet Action Bar
 Addon:RegisterRule {
@@ -43,51 +48,95 @@ Addon:RegisterRule {
 -- Stance/Shapeshift Bar
 Addon:RegisterRule {
     id = "blizzard_stance",
-    priority = 300,
+    priority = 210,
     match = Addon.MatchName("^StanceButton%d+")
 }
 
 -- Possess Bar
 Addon:RegisterRule {
     id = "blizzard_possess",
-    priority = 400,
+    priority = 220,
     match = Addon.MatchName("^PossessButton%d+")
 }
 
 -- Extra Action Button
 Addon:RegisterRule {
     id = "blizzard_extra",
-    priority = 500,
+    priority = 230,
     match = Addon.MatchName("^ExtraActionButton%d+")
 }
 
 -- Zone Ability Button
 Addon:RegisterRule {
     id = "blizzard_zone",
-    priority = 600,
+    priority = 240,
     match = Addon.MatchName("^ZoneAbilityFrame")
 }
 
--- Inventory Frame
+--------------------------------------------------------------------------------
+-- Blizzard Cooldown Manager
+--------------------------------------------------------------------------------
+
+-- cooldown manager
 Addon:RegisterRule {
-    id = "blizzard_container",
-    priority = 800,
-    match = Addon.MatchName("^ContainerFrame")
+    id = "blizzard_cdm_essential",
+    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_ESSENTIAL_COOLDOWNS),
+    priority = 210,
+    match = Addon.MatchName("^EssentialCooldownViewer")
 }
 
--- TODO: Need to write better functions for evaluating target frame stuff
+Addon:RegisterRule {
+    id = "blizzard_cdm_utility",
+    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_UTILITY_COOLDOWNS),
+    priority = 220,
+    match = Addon.MatchName("^UtilityCooldownViewer")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_cdm_buff_icons",
+    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFFS),
+    priority = 230,
+    match = Addon.MatchName("^BuffIconCooldownViewer")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_cdm_buff_bars",
+    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFF_BARS),
+    priority = 240,
+    match = Addon.MatchName("^BuffBarCooldownViewer")
+}
+
+--------------------------------------------------------------------------------
+-- Unit Frames
+--------------------------------------------------------------------------------
+
+-- TODO: nameplates
+
 -- Target Frame
 Addon:RegisterRule {
     id = "blizzard_target",
-    priority = 700,
+    priority = 310,
     match = Addon.MatchName("^TargetFrame")
 }
 
--- TODO: cooldown manager
--- TODO: nameplates
+--------------------------------------------------------------------------------
+-- Other Stuff
+--------------------------------------------------------------------------------
 
--- This rule technically does not need to be defined, but is implemented to
--- make it a bit easier to turn tullaCTC into an allow list
+-- Items
+Addon:RegisterRule {
+    id = "blizzard_container",
+    priority = 800,
+    match = Addon.MatchName(
+        "^ContainerFrame",
+        "^PaperDoll"
+    )
+}
+
+--------------------------------------------------------------------------------
+-- ...And the rest!
+--------------------------------------------------------------------------------
+
 Addon:RegisterRule {
     id = "everything",
     enabled = true,
