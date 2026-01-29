@@ -35,6 +35,39 @@ Addon:RegisterRule {
 }
 
 --------------------------------------------------------------------------------
+-- Blizzard Cooldown Manager
+--------------------------------------------------------------------------------
+
+-- cooldown manager
+Addon:RegisterRule {
+    id = "blizzard_cdm_essential",
+    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_ESSENTIAL_COOLDOWNS),
+    priority = 111,
+    match = Addon.MatchName("^EssentialCooldownViewer")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_cdm_utility",
+    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_UTILITY_COOLDOWNS),
+    priority = 112,
+    match = Addon.MatchName("^UtilityCooldownViewer")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_cdm_buff_icons",
+    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFFS),
+    priority = 113,
+    match = Addon.MatchName("^BuffIconCooldownViewer")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_cdm_buff_bars",
+    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFF_BARS),
+    priority = 114,
+    match = Addon.MatchName("^BuffBarCooldownViewer")
+}
+
+--------------------------------------------------------------------------------
 -- Secondary Bars
 --------------------------------------------------------------------------------
 
@@ -71,39 +104,6 @@ Addon:RegisterRule {
     id = "blizzard_zone",
     priority = 240,
     match = Addon.MatchName("^ZoneAbilityFrame")
-}
-
---------------------------------------------------------------------------------
--- Blizzard Cooldown Manager
---------------------------------------------------------------------------------
-
--- cooldown manager
-Addon:RegisterRule {
-    id = "blizzard_cdm_essential",
-    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_ESSENTIAL_COOLDOWNS),
-    priority = 210,
-    match = Addon.MatchName("^EssentialCooldownViewer")
-}
-
-Addon:RegisterRule {
-    id = "blizzard_cdm_utility",
-    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_UTILITY_COOLDOWNS),
-    priority = 220,
-    match = Addon.MatchName("^UtilityCooldownViewer")
-}
-
-Addon:RegisterRule {
-    id = "blizzard_cdm_buff_icons",
-    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFFS),
-    priority = 230,
-    match = Addon.MatchName("^BuffIconCooldownViewer")
-}
-
-Addon:RegisterRule {
-    id = "blizzard_cdm_buff_bars",
-    displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFF_BARS),
-    priority = 240,
-    match = Addon.MatchName("^BuffBarCooldownViewer")
 }
 
 --------------------------------------------------------------------------------
