@@ -33,7 +33,7 @@ local cooldowns = setmetatable({}, {
 local durations = {}
 
 local function getDuration(endTime, duration, modRate)
-    local key = ('%s/%s'):format(endTime, modRate)
+    local key = ('%s:%s'):format(endTime, modRate or 1)
 
     local cached = durations[key]
     if not cached then
