@@ -166,17 +166,3 @@ function Addon.MatchName(...)
         return false
     end
 end
-
-function Addon.GetActionID(cooldown)
-    local parent = cooldown:GetParent()
-    if parent then
-        return parent.action or parent:GetAttribute("action")
-    end
-end
-
-function Addon.GetSpellID(cooldown)
-    local parent = cooldown:GetParent()
-    if parent then
-        return parent.spell or parent:GetAttribute("spell")
-    end
-end
