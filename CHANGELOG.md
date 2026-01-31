@@ -1,5 +1,11 @@
 # tullaCTC Version History
 
+## v12.0.0-beta3
+
+* Added nameplate support
+* Added additional hooks to enforce cooldown styling preferences
+* Overall, the addon should be much more consistent in applying styling
+
 ## v12.0.0-beta2
 
 * You'll probably need to reset settings. /run tullaCTCDB = nil; ReloadUI()
