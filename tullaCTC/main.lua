@@ -17,6 +17,9 @@ local cooldowns = setmetatable({}, {
     __index = function(self, cooldown)
         local info = {
             cooldown = cooldown,
+            -- some cooldowns (i'm looking at you, nameplates) aren't actually
+            -- linked up with their parents before the cooldown is set
+            name = Addon.GetRegionName(cooldown),
             themeName = Addon:GetThemeName(cooldown),
             text = cooldown:GetCountdownFontString()
         }
@@ -25,6 +28,22 @@ local cooldowns = setmetatable({}, {
         return info
     end
 })
+
+-- hopefully avoid repeatedly creating the same duration objects
+local durations = {}
+
+local function getDuration(endTime, duration, modRate)
+    local key = ('%s/%s'):format(endTime, modRate)
+
+    local cached = durations[key]
+    if not cached then
+        cached = C_DurationUtil.CreateDuration()
+        durations[key] = cached
+    end
+
+    cached:SetTimeFromEnd(endTime, duration, modRate)
+    return cached
+end
 
 local function notSecret(...)
     for i = 1, select('#', ...) do
@@ -85,8 +104,7 @@ function Addon:OnLoad()
     hooksecurefunc(cooldown_mt, 'SetCooldown', function(cooldown, start, duration, modRate)
         local durationObject
         if notSecret(start, duration, modRate) then
-            durationObject = C_DurationUtil.CreateDuration()
-            durationObject:SetTimeFromStart(start, duration, modRate)
+            durationObject = getDuration(start + duration, duration, modRate)
         else
             durationObject = Addon:GetDuration(cooldown)
         end
@@ -97,8 +115,7 @@ function Addon:OnLoad()
     hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cooldown, duration, modRate)
         local durationObject
         if notSecret(duration, modRate) then
-            durationObject = C_DurationUtil.CreateDuration()
-            durationObject:SetTimeFromStart(GetTime(), duration, modRate)
+            durationObject = getDuration(GetTime() + duration, duration, modRate)
         else
             durationObject = Addon:GetDuration(cooldown)
         end
@@ -113,8 +130,7 @@ function Addon:OnLoad()
     hooksecurefunc(cooldown_mt, 'SetCooldownFromExpirationTime', function(cooldown, expirationTime, duration, modRate)
         local durationObject
         if notSecret(expirationTime, duration, modRate) then
-            durationObject = C_DurationUtil.CreateDuration()
-            durationObject:SetTimeFromEnd(expirationTime, duration, modRate)
+            durationObject = getDuration(expirationTime, duration, modRate)
         else
             durationObject = self:GetDuration(cooldown)
         end
@@ -357,12 +373,32 @@ end
 
 function Addon:OnUpdate()
     for cd, info in pairs(cooldowns) do
-        local themeName = Addon:GetThemeName(cd)
-        if themeName ~= info.themeName then
-            info.themeName = themeName
-            themers[themeName]:Apply(info)
+        -- try and retrieve the name of a cooldown, if we don't know it yet
+        local name = info.name
+        if not name then
+            name = Addon.GetRegionName(cd)
+            if name then
+                info.name = name
+
+                local themeName = Addon:GetThemeName(cd)
+                if themeName ~= info.themeName then
+                    info.themeName = themeName
+                    themers[themeName]:Apply(info)
+                else
+                    themers[themeName]:ApplyColor(info)
+                end
+            else
+                themers[info.themeName]:ApplyColor(info)
+            end
         else
-            themers[themeName]:ApplyColor(info)
+            themers[info.themeName]:ApplyColor(info)
+        end
+    end
+
+    -- cleanup: purge expired durations from cache
+    for key, duration in pairs(durations) do
+        if duration:IsZero() then
+            durations[key] = nil
         end
     end
 end
