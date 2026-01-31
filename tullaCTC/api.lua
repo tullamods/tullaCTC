@@ -66,6 +66,25 @@ function Addon:IterateRules()
     return ipairs(rules)
 end
 
+-- stateless iterator for active rules (no allocation per call)
+local function activeRulesIterator(_, index)
+    while true do
+        index = index + 1
+        local rule = rules[index]
+        if not rule then
+            return nil
+        end
+        if Addon:IsRuleEnabled(rule) then
+            return index, rule
+        end
+    end
+end
+
+--- Iterates over enabled rules in priority order.
+function Addon:IterateActiveRules()
+    return activeRulesIterator, nil, 0
+end
+
 --------------------------------------------------------------------------------
 -- Duration Provider API
 --
@@ -144,15 +163,14 @@ function Addon.MatchName(...)
     local patterns = {...}
 
     return function(region)
-        local f = region
         local name
 
-        while f do
-            name = f:GetName()
+        while region do
+            name = region:GetName()
             if name then
                 break
             end
-            f = f:GetParent()
+            region = region:GetParent()
         end
 
         if name then
@@ -164,5 +182,15 @@ function Addon.MatchName(...)
         end
 
         return false
+    end
+end
+
+function Addon.GetRegionName(region)
+    while region do
+        local name = region:GetName()
+        if name then
+            return name
+        end
+        region = region:GetParent()
     end
 end

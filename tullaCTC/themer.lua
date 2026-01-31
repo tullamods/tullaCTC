@@ -4,7 +4,7 @@ local _, Addon = ...
 
 local NOOP = {
     Apply = function() end,
-    UpdateColor = function() end
+    ApplyColor = function() end
 }
 
 -- converts draw state enum values into a bool|nil
@@ -34,12 +34,11 @@ local function generateColorCurve(textColors, defaultColor)
     end
 
     if defaultColor then
+        local start = textColors[#textColors].threshold + offset
         local color = CreateColorFromRGBAHexString(defaultColor)
-        local start = textColors[#textColors].threshold
 
-        curve:AddPoint(start + offset, color)
+        curve:AddPoint(start, color)
     end
-
 
     return curve
 end
@@ -79,7 +78,9 @@ function Addon:CreateThemer(config)
 
         if config.textColors and #config.textColors > 0 then
             textColors = generateColorCurve(config.textColors, config.defaultTextColor)
-        elseif config.defaultTextColor then
+        end
+
+        if config.defaultTextColor then
             defaultTextColor = CreateColorFromRGBAHexString(config.defaultTextColor)
         end
     end
@@ -97,43 +98,41 @@ function Addon:CreateThemer(config)
 
     local themer = {}
 
-    function themer:Apply(cdInfo)
-        local cooldown = cdInfo.cooldown
+    function themer:Apply(info)
+        local cooldown = info.cooldown
         if drawText ~= nil then
             cooldown:SetHideCountdownNumbers(not drawText)
         end
 
         if themeText then
-            local text = cooldown:GetCountdownFontString()
-            if text then
-                if font then
-                    if fontSize > 0 then
-                        if not text:SetFont(font, fontSize, fontFlags) then
-                            text:SetFont(STANDARD_TEXT_FONT, fontSize, fontFlags)
-                        end
-                    else
-                        cooldown:SetCountdownFont(font)
+            local text = info.text
+            if font then
+                if fontSize > 0 then
+                    if not text:SetFont(font, fontSize, fontFlags) then
+                        text:SetFont(STANDARD_TEXT_FONT, fontSize, fontFlags)
                     end
-                end
-
-                if textColors and cdInfo.duration then
-                    local color = cdInfo.duration:EvaluateRemainingDuration(textColors)
-                    text:SetTextColor(color:GetRGBA())
-                elseif defaultTextColor then
-                    text:SetTextColor(defaultTextColor:GetRGBA())
                 else
-                    text:SetTextColor(1, 1, 1, 1)
+                    cooldown:SetCountdownFont(font)
                 end
+            end
 
-                if point then
-                    text:ClearAllPoints()
-                    text:SetPoint(point, offsetX, offsetY)
-                end
+            if textColors and info.duration then
+                local color = info.duration:EvaluateRemainingDuration(textColors)
+                text:SetTextColor(color:GetRGBA())
+            elseif defaultTextColor then
+                text:SetTextColor(defaultTextColor:GetRGBA())
+            else
+                text:SetTextColor(1, 1, 1, 1)
+            end
 
-                if shadowColor then
-                    text:SetShadowColor(shadowColor:GetRGBA())
-                    text:SetShadowOffset(shadowX, shadowY)
-                end
+            if point then
+                text:ClearAllPoints()
+                text:SetPoint(point, offsetX, offsetY)
+            end
+
+            if shadowColor then
+                text:SetShadowColor(shadowColor:GetRGBA())
+                text:SetShadowOffset(shadowX, shadowY)
             end
 
             if abbrevThreshold then
@@ -168,25 +167,24 @@ function Addon:CreateThemer(config)
     end
 
     if themeText and textColors then
-        function themer:UpdateColor(cdInfo)
-            local text = cdInfo.cooldown:GetCountdownFontString()
-            if not text then
-                return
-            end
+        function themer:ApplyColor(info)
+            local duration = info.duration
 
-            local duration = cdInfo.duration
-            local r, g, b, a
-
+            local color
             if duration then
-                r, g, b, a = duration:EvaluateRemainingDuration(textColors):GetRGBA()
-            else
-                r, g, b, a = 1, 1, 1, 1
+                color = duration:EvaluateRemainingDuration(textColors)
+            elseif defaultTextColor then
+                color = defaultTextColor
             end
 
-            text:SetTextColor(r, g, b, a)
+            if color then
+                info.text:SetTextColor(color:GetRGBA())
+            else
+                info.text:SetTextColor(1, 1, 1, 1)
+            end
         end
     else
-        themer.UpdateColor = NOOP.UpdateColor
+        themer.ApplyColor = NOOP.ApplyColor
     end
 
     return themer

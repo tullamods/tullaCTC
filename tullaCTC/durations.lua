@@ -7,36 +7,69 @@
 
 local _, Addon = ...
 
+local function findProp(region, ...)
+    local keyCount = select('#', ...)
+    local maxDepth = 3
+    local depth = 0
+
+    while region and depth < maxDepth do
+        for i = 1, keyCount do
+            local key = select(i, ...)
+            local value = region[key]
+
+            if value then
+                return value
+            end
+        end
+
+        region = region:GetParent()
+        depth = depth + 1
+    end
+end
+
 Addon:RegisterDurationProvider {
-    id = "action",
+    id = "blizzard_action",
     priority = 100,
     handle = function(cooldown)
         local parent = cooldown:GetParent()
-
-        if parent and type(parent.action) == "number" then
-            if parent.chargeCooldown == cooldown then
-                return true, C_ActionBar.GetActionChargeDuration(parent.action)
-            end
-
-            if parent.lossOfControlCooldown == cooldown then
-                return true, C_ActionBar.GetActionLossOfControlCooldownDuration(parent.action)
-            end
-
-            return true, C_ActionBar.GetActionCooldownDuration(parent.action)
+        if not parent then
+            return false
         end
 
-        return false
+        local action = parent.action
+        if not action then
+            return false
+        end
+
+        if parent.chargeCooldown == cooldown then
+            return true, C_ActionBar.GetActionChargeDuration(action)
+        end
+
+        if parent.lossOfControlCooldown == cooldown then
+            return true, C_ActionBar.GetActionLossOfControlCooldownDuration(action)
+        end
+
+        return true, C_ActionBar.GetActionCooldownDuration(action)
     end
 }
 
 Addon:RegisterDurationProvider {
-    id = "aura",
+    id = "blizzard_aura",
     priority = 200,
     handle = function(cooldown)
         local parent = cooldown:GetParent()
+        if not parent then
+            return false
+        end
 
-        if parent and parent.unit and parent.auraInstanceID then
-            return true, C_UnitAuras.GetAuraDuration(parent.unit, parent.auraInstanceID)
+        local auraInstanceID = findProp(parent, 'auraInstanceID')
+        if not auraInstanceID then
+            return false
+        end
+
+        local auraInstanceUnit = findProp(parent, 'unitToken', 'unit', 'auraDataUnit')
+        if auraInstanceUnit then
+            return true, C_UnitAuras.GetAuraDuration(auraInstanceUnit, auraInstanceID)
         end
 
         return false
@@ -44,23 +77,27 @@ Addon:RegisterDurationProvider {
 }
 
 Addon:RegisterDurationProvider {
-    id = "spell",
+    id = "blizzard_spell",
     priority = 300,
     handle = function(cooldown)
         local parent = cooldown:GetParent()
-
-        if parent and type(parent.spellID) == "number" then
-            if parent.chargeCooldown == cooldown then
-                return true, C_Spell.GetSpellChargeDuration(parent.spellID)
-            end
-
-            if parent.lossOfControlCooldown == cooldown then
-                return true, C_Spell.GetSpellLossOfControlCooldownDuration(parent.spellID)
-            end
-
-            return true, C_Spell.GetSpellCooldownDuration(parent.spellID)
+        if not parent then
+            return false
         end
 
-        return false
+        local spellID = parent.spellID or parent:GetAttribute("spell")
+        if not spellID then
+            return false
+        end
+
+        if parent.chargeCooldown == cooldown then
+            return true, C_Spell.GetSpellChargeDuration(spellID)
+        end
+
+        if parent.lossOfControlCooldown == cooldown then
+            return true, C_Spell.GetSpellLossOfControlCooldownDuration(spellID)
+        end
+
+        return true, C_Spell.GetSpellCooldownDuration(spellID)
     end
 }
