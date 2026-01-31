@@ -110,7 +110,11 @@ Addon:RegisterRule {
 -- Unit Frames
 --------------------------------------------------------------------------------
 
--- TODO: nameplates
+Addon:RegisterRule {
+    id = "blizzard_nameplates",
+    priority = 300,
+    match = Addon.MatchName("^NamePlate%d+")
+}
 
 -- Target Frame
 Addon:RegisterRule {
