@@ -314,17 +314,28 @@ function Addon:IsRuleEnabled(rule)
     return rule.enabled == true
 end
 
--- TODO: debounce, probably
-function Addon:Refresh()
+-- throttle refresh since it can be called a bunch by the config ui
+do
+    local refreshPending
+    local function refresh()
+        refreshPending = false
     wipe(themers)
 
     for _, cooldownInfo in pairs(active) do
-        local theme = self:GetThemeName(cooldownInfo.cooldown)
+            local theme = Addon:GetThemeName(cooldownInfo.cooldown)
 
         cooldownInfo.theme = theme
 
         if theme then
             themers[theme]:Apply(cooldownInfo)
+            end
+        end
+    end
+
+    function Addon:Refresh()
+        if not refreshPending then
+            refreshPending = true
+            C_Timer.After(0, refresh)
         end
     end
 end
