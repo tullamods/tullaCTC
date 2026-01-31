@@ -18,7 +18,7 @@ Addon:RegisterRule {
 
 Addon:RegisterRule {
     id = "action_charge",
-    priority = 102,
+    priority = 110,
     match = function(cooldown)
         local parent = cooldown:GetParent()
         return parent and parent.action and cooldown:GetParentKey() == "chargeCooldown"
@@ -27,7 +27,7 @@ Addon:RegisterRule {
 
 Addon:RegisterRule {
     id = "action_loc",
-    priority = 103,
+    priority = 120,
     match = function(cooldown)
         local parent = cooldown:GetParent()
         return parent and parent.action and cooldown:GetParentKey() == "lossOfControlCooldown"
@@ -42,28 +42,28 @@ Addon:RegisterRule {
 Addon:RegisterRule {
     id = "blizzard_cdm_essential",
     displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_ESSENTIAL_COOLDOWNS),
-    priority = 111,
+    priority = 200,
     match = Addon.MatchName("^EssentialCooldownViewer")
 }
 
 Addon:RegisterRule {
     id = "blizzard_cdm_utility",
     displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_UTILITY_COOLDOWNS),
-    priority = 112,
+    priority = 210,
     match = Addon.MatchName("^UtilityCooldownViewer")
 }
 
 Addon:RegisterRule {
     id = "blizzard_cdm_buff_icons",
     displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFFS),
-    priority = 113,
+    priority = 220,
     match = Addon.MatchName("^BuffIconCooldownViewer")
 }
 
 Addon:RegisterRule {
     id = "blizzard_cdm_buff_bars",
     displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFF_BARS),
-    priority = 114,
+    priority = 230,
     match = Addon.MatchName("^BuffBarCooldownViewer")
 }
 
@@ -74,35 +74,35 @@ Addon:RegisterRule {
 -- Pet Action Bar
 Addon:RegisterRule {
     id = "blizzard_pet",
-    priority = 200,
+    priority = 300,
     match = Addon.MatchName("^PetActionButton%d+")
 }
 
 -- Stance/Shapeshift Bar
 Addon:RegisterRule {
     id = "blizzard_stance",
-    priority = 210,
+    priority = 310,
     match = Addon.MatchName("^StanceButton%d+")
 }
 
 -- Possess Bar
 Addon:RegisterRule {
     id = "blizzard_possess",
-    priority = 220,
+    priority = 320,
     match = Addon.MatchName("^PossessButton%d+")
 }
 
 -- Extra Action Button
 Addon:RegisterRule {
     id = "blizzard_extra",
-    priority = 230,
+    priority = 330,
     match = Addon.MatchName("^ExtraActionButton%d+")
 }
 
 -- Zone Ability Button
 Addon:RegisterRule {
     id = "blizzard_zone",
-    priority = 240,
+    priority = 340,
     match = Addon.MatchName("^ZoneAbilityFrame")
 }
 
@@ -112,14 +112,14 @@ Addon:RegisterRule {
 
 Addon:RegisterRule {
     id = "blizzard_nameplates",
-    priority = 300,
+    priority = 400,
     match = Addon.MatchName("^NamePlate%d+")
 }
 
 -- Target Frame
 Addon:RegisterRule {
     id = "blizzard_target",
-    priority = 310,
+    priority = 410,
     match = Addon.MatchName("^TargetFrame")
 }
 
@@ -130,7 +130,7 @@ Addon:RegisterRule {
 -- Items
 Addon:RegisterRule {
     id = "blizzard_container",
-    priority = 800,
+    priority = 500,
     match = Addon.MatchName(
         "^ContainerFrame",
         "^PaperDoll"

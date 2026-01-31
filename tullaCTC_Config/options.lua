@@ -14,8 +14,8 @@ local options = {
 }
 
 options.args.themes.order = 100
-options.args.rules.order = 150
-options.args.profiles.order = 200
+options.args.rules.order = 200
+options.args.profiles.order = 300
 
 LibStub('AceConfig-3.0'):RegisterOptionsTable("tullaCTC", options)
 

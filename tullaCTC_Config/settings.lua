@@ -5,48 +5,30 @@ local _, Addon = ...
 local tullaCTC = _G.tullaCTC
 
 --------------------------------------------------------------------------------
--- Theme API
+-- Theme Management
 --------------------------------------------------------------------------------
 
 function Addon:GetThemes()
     return tullaCTC.db.profile.themes
 end
 
-function Addon:GetTheme(id)
-    return tullaCTC.db.profile.themes[id]
+function Addon:HasTheme(themeID)
+    return rawget(tullaCTC.db.profile.themes, themeID) ~= nil
 end
 
-function Addon:GetThemeChoices()
-    local choices = {}
-
-    for id, theme in pairs(self:GetThemes()) do
-        choices[id] = theme.displayName or id
-    end
-
-    return choices
-end
-
-function Addon:ThemeExists(id)
-    return rawget(tullaCTC.db.profile.themes, id) ~= nil
-end
-
-function Addon:CreateTheme(name, baseID)
+function Addon:CreateTheme(name, baseThemeID)
     local key = "custom_" .. name
-
-    if self:ThemeExists(key) then
+    if self:HasTheme(key) then
         return nil
     end
 
-    if baseID then
-        local source = self:GetTheme(baseID)
-        if not source then
-            return nil
-        end
+    if baseThemeID and self:HasTheme(baseThemeID) then
+        local theme = CopyTable(tullaCTC.db.profile.themes[baseThemeID])
 
-        local copy = CopyTable(source)
-        copy.displayName = name
-        copy.base = baseID
-        tullaCTC.db.profile.themes[key] = copy
+        theme.base = baseThemeID
+        theme.displayName = name
+
+        tullaCTC.db.profile.themes[key] = theme
     else
         tullaCTC.db.profile.themes[key].displayName = name
     end
@@ -55,64 +37,32 @@ function Addon:CreateTheme(name, baseID)
     return key
 end
 
-function Addon:DeleteTheme(id)
-    if id == "default" then
+function Addon:DeleteTheme(themeID)
+    if themeID == "default" then
         return false
     end
 
-    tullaCTC.db.profile.themes[id] = nil
+    tullaCTC.db.profile.themes[themeID] = nil
     tullaCTC:Refresh()
     return true
 end
 
-function Addon:CopyTheme(id)
-    local source = self:GetTheme(id)
-    if not source then
-        return nil
-    end
-
-    local baseName = source.displayName or id
-    local copyName = baseName .. " Copy)"
-    local counter = 2
-
-    while self:ThemeExists("custom_" .. copyName) do
-        copyName = baseName .. " (Copy " .. counter .. ")"
-        counter = counter + 1
-    end
-
-    return self:CreateTheme(copyName, id)
-end
-
-function Addon:ResetTheme(id)
-    local theme = self:GetTheme(id)
-    if not theme then
+function Addon:ResetTheme(themeID)
+    if not self:HasTheme(themeID) then
         return false
     end
 
-    local baseID = theme.base
+    -- grab values we want to persist after resetting
+    local theme = tullaCTC.db.profile.themes[themeID]
+    local baseThemeID = theme.base
     local displayName = theme.displayName
-    tullaCTC.db.profile.themes[id] = nil
 
-    if baseID then
-        local source = self:GetTheme(baseID)
-        if source then
-            local copy = CopyTable(source)
-            copy.displayName = displayName
-            copy.baseTheme = baseID
-            tullaCTC.db.profile.themes[id] = copy
-        else
-            tullaCTC.db.profile.themes[id].displayName = displayName
-        end
-    else
-        tullaCTC.db.profile.themes[id].displayName = displayName
-    end
-
-    tullaCTC:Refresh()
-    return true
+    tullaCTC.db.profile.themes[themeID] = nil
+    return self:CreateTheme(displayName or themeID, baseThemeID)
 end
 
-function Addon:RenameTheme(id, newName)
-    local theme = self:GetTheme(id)
+function Addon:RenameTheme(themeID, newName)
+    local theme = self:GetTheme(themeID)
     if not theme then
         return false
     end
@@ -121,34 +71,40 @@ function Addon:RenameTheme(id, newName)
     return true
 end
 
-function Addon:SetThemeProperty(theme, property, value)
-    theme[property] = value
-    tullaCTC:Refresh()
+--------------------------------------------------------------------------------
+-- Theme Config API
+--------------------------------------------------------------------------------
+
+function Addon:SetThemeProperty(themeID, property, value)
+    local theme = tullaCTC.db.profile.themes[themeID]
+    local oldValue = theme[property]
+
+    if oldValue ~= value then
+        theme[property] = value
+        tullaCTC:Refresh()
+        return true
+    end
+
+    return false
 end
 
---------------------------------------------------------------------------------
--- Text Colors API
---------------------------------------------------------------------------------
-
-function Addon:GetTextColors(theme)
-    local colors = theme.textColors or {}
-
-    table.sort(colors, function(a, b)
+function Addon:GetSortedTextColors(theme)
+    table.sort(theme.textColors, function(a, b)
         return a.threshold < b.threshold
     end)
 
-    return colors
+    return theme.textColors
 end
 
-function Addon:GetTextColorEntry(theme, index)
-    return self:GetTextColors(theme)[index]
-end
+function Addon:AddTextColorEntry(theme, threshold, color)
+    if not (threshold and threshold > 0) then
+        return false
+    end
 
-function Addon:AddTextColor(theme, threshold, color)
-    theme.textColors = theme.textColors or {}
+    local entries = theme.textColors
 
-    local index = #theme.textColors + 1
-    for i, entry in ipairs(theme.textColors) do
+    local index = #entries + 1
+    for i, entry in ipairs(entries) do
         if entry.threshold == threshold then
             return false
         elseif entry.threshold > threshold then
@@ -157,7 +113,7 @@ function Addon:AddTextColor(theme, threshold, color)
         end
     end
 
-    table.insert(theme.textColors, index, {
+    tinsert(entries, index, {
         threshold = threshold,
         color = color or "FFFFFFFF"
     })
@@ -166,11 +122,11 @@ function Addon:AddTextColor(theme, threshold, color)
     return true
 end
 
-function Addon:RemoveTextColor(theme, index)
-    local colors = theme.textColors
+function Addon:RemoveTextColorEntry(theme, index)
+    local entries = theme.textColors
 
-    if colors and colors[index] then
-        table.remove(colors, index)
+    if index > 0 and index <= #entries then
+        tremove(entries, index)
         tullaCTC:Refresh()
         return true
     end
@@ -178,10 +134,12 @@ function Addon:RemoveTextColor(theme, index)
     return false
 end
 
-function Addon:SetTextColorValue(theme, index, r, g, b, a)
+-- ensure textColors is a profile-specific copy before modifying
+function Addon:SetTextColorValue(theme, index, color)
     local entry = theme.textColors[index]
-    if entry then
-        entry.color = self:RGBAToHex(r, g, b, a)
+
+    if entry.color ~= color then
+        entry.color = color
         tullaCTC:Refresh()
         return true
     end
@@ -190,21 +148,18 @@ function Addon:SetTextColorValue(theme, index, r, g, b, a)
 end
 
 function Addon:SetTextColorThreshold(theme, index, threshold)
-    local colors = self:GetTextColors(theme)
-    local entry = colors[index]
-
-    if not entry then
+    if not (threshold and threshold > 0) then
         return false
     end
 
-    -- Check for duplicate (excluding current entry)
-    for j, e in ipairs(colors) do
-        if j ~= index and e.threshold == threshold then
+    local entries = theme.textColors
+    for _, entry in pairs(entries) do
+        if entry.threshold == threshold then
             return false
         end
     end
 
-    entry.threshold = threshold
+    entries[index].threshold = threshold
     tullaCTC:Refresh()
     return true
 end

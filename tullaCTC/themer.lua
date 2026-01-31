@@ -17,29 +17,29 @@ local function getDrawStateBool(state)
     return nil
 end
 
-local function generateColorCurve(colorThresholds, defaultColor)
-    if not (colorThresholds and #colorThresholds > 0) then
-        return
-    end
-
-    table.sort(colorThresholds, function(a, b)
-        return a.threshold < b.threshold
-    end)
+local function generateColorCurve(textColors, defaultColor)
+    table.sort(textColors, function(a, b) return a.threshold < b.threshold end)
 
     local curve = C_CurveUtil.CreateColorCurve()
     curve:SetType(Enum.LuaCurveType.Step)
 
-    for i, entry in ipairs(colorThresholds) do
-        local startTime = i > 1 and colorThresholds[i - 1].threshold or 0
+    local offset = 0.5
+
+    for i = 1, #textColors do
+        local entry = textColors[i]
+        local start = (i == 1 and 0) or (textColors[i - 1].threshold + offset)
         local color = CreateColorFromRGBAHexString(entry.color)
-        curve:AddPoint(startTime, color)
+
+        curve:AddPoint(start, color)
     end
 
-    -- add default color for durations above the last threshold
     if defaultColor then
-        local lastThreshold = colorThresholds[#colorThresholds].threshold
-        curve:AddPoint(lastThreshold, CreateColorFromRGBAHexString(defaultColor))
+        local color = CreateColorFromRGBAHexString(defaultColor)
+        local start = textColors[#textColors].threshold
+
+        curve:AddPoint(start + offset, color)
     end
+
 
     return curve
 end

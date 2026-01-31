@@ -66,7 +66,7 @@ L.VerticalOffset = 'Vertical Offset'
 -- Color threshold UI
 L.AddColorThreshold = 'Add Color Threshold'
 L.NewThresholdValue = 'Threshold (seconds)'
-L.NewThresholdValueDesc = "Enter threshold in seconds (e.g., 5, 60, 3600) or 'inf' for infinite"
+L.NewThresholdValueDesc = "Enter threshold in seconds (e.g., 5, 60, 3600)"
 L.RemoveThreshold = 'Remove'
 L.RemoveThresholdConfirm = 'Remove this color threshold?'
 L.ColorRangeForever = 'Forever'
@@ -75,8 +75,8 @@ L.ColorRangeHours = '%d hour(s)'
 L.ColorRangeMinutes = '%d minute(s)'
 L.ColorRangeSeconds = '%d second(s)'
 L.ColorRangeAbove = 'Above %s'
-L.ColorRangeUpTo = 'Up to %s'
-L.ColorRangeBetween = '%s to %s'
+L.ColorRangeOrLess = '%s or less'
+L.ColorRangeTo = '%s to %s'
 L.ColorRangeAll = 'All durations'
 
 -- Theme settings
@@ -113,6 +113,11 @@ L.RuleEnabled = 'Enabled'
 L.RuleEnabledDesc = 'Enable or disable this rule'
 L.RuleTheme = 'Theme'
 L.RuleThemeDesc = 'Select which theme to apply when this rule matches'
+
+-- Builtin Theme Names
+L.Theme_default = DEFAULT
+L.Theme_disable = DISABLE
+L.Theme_none= NONE
 
 -- Builtin Rule Names
 L.Rule_action = 'Action Buttons'

@@ -147,6 +147,8 @@ function Addon:OnLoad()
     end
 
     hooksecurefunc(cooldown_mt, 'SetHideCountdownNumbers', function(cooldown, hide)
+        if issecretvalue(hide) then return end
+
         local themeConfig = getThemeConfig(cooldown)
         if not (themeConfig and themeConfig.enabled and themeConfig.themeText) then return end
 
@@ -158,6 +160,8 @@ function Addon:OnLoad()
     end)
 
     hooksecurefunc(cooldown_mt, 'SetDrawBling', function(cooldown, draw)
+        if issecretvalue(draw) then return end
+
         local themeConfig = getThemeConfig(cooldown)
         if not (themeConfig and themeConfig.enabled and themeConfig.themeCooldown) then return end
 
@@ -169,6 +173,8 @@ function Addon:OnLoad()
     end)
 
     hooksecurefunc(cooldown_mt, 'SetDrawEdge', function(cooldown, draw)
+        if issecretvalue(draw) then return end
+
         local themeConfig = getThemeConfig(cooldown)
         if not (themeConfig and themeConfig.enabled and themeConfig.themeCooldown) then return end
 
@@ -180,6 +186,8 @@ function Addon:OnLoad()
     end)
 
     hooksecurefunc(cooldown_mt, 'SetDrawSwipe', function(cooldown, draw)
+        if issecretvalue(draw) then return end
+
         local themeConfig = getThemeConfig(cooldown)
         if not (themeConfig and themeConfig.enabled and themeConfig.themeCooldown) then return end
 
@@ -191,6 +199,8 @@ function Addon:OnLoad()
     end)
 
     hooksecurefunc(cooldown_mt, 'SetReverse', function(cooldown, reverse)
+        if issecretvalue(reverse) then return end
+
         local themeConfig = getThemeConfig(cooldown)
         if not (themeConfig and themeConfig.enabled and themeConfig.themeCooldown) then return end
 
@@ -228,6 +238,7 @@ function Addon:OnLoad()
     SLASH_tullaCTC2 = '/tctc'
 end
 
+-- note that colors are in fully qualified web color format #RRGGBBAA
 function Addon:GetDBDefaults()
     return {
         profile = {
@@ -281,8 +292,8 @@ function Addon:GetDBDefaults()
 
                 -- default styling with conditional colors
                 default = {
-                    displayName = DEFAULT,
                     fontSize = 18,
+
                     textColors = {
                         -- soon (0 - 5s)
                         { threshold = 5, color = "FF6347FF" },
@@ -295,8 +306,7 @@ function Addon:GetDBDefaults()
                     defaultTextColor = "AAAAAAFF"
                 },
 
-                disable = {
-                    displayName = DISABLE,
+                none = {
                     enabled  = false
                 }
             },

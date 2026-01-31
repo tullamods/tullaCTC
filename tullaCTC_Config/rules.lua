@@ -4,10 +4,12 @@ local tullaCTC = _G.tullaCTC
 
 local function getThemeValues()
     local values = {}
+
     local themes = tullaCTC.db.profile.themes
     for id, theme in pairs(themes) do
-        values[id] = theme.displayName or id
+        values[id] = theme.displayName or rawget(L, 'Theme_' .. id) or id
     end
+
     return values
 end
 

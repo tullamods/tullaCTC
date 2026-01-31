@@ -2,6 +2,7 @@
 
 local _, Addon = ...
 local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
+local tullaCTC = _G.tullaCTC
 
 --------------------------------------------------------------------------------
 -- Color Utilities
@@ -30,9 +31,7 @@ end
 --------------------------------------------------------------------------------
 
 function Addon:FormatDuration(seconds)
-    if seconds == math.huge then
-        return L.ColorRangeForever
-    elseif seconds >= 86400 then
+    if seconds >= 86400 then
         return L.ColorRangeDays:format(Round(seconds / 86400))
     elseif seconds >= 3600 then
         return L.ColorRangeHours:format(Round(seconds / 3600))
@@ -46,16 +45,18 @@ end
 function Addon:FormatEffectiveRange(prevThreshold, currentThreshold)
     local endDuration = self:FormatDuration(currentThreshold)
 
-    if currentThreshold == math.huge then
-        if prevThreshold then
-            return L.ColorRangeAbove:format(self:FormatDuration(prevThreshold))
-        else
-            return L.ColorRangeAll
-        end
-    elseif not prevThreshold or prevThreshold == 0 then
-        return L.ColorRangeUpTo:format(endDuration)
+    if not prevThreshold or prevThreshold == 0 then
+        return L.ColorRangeOrLess:format(endDuration)
     else
-        return L.ColorRangeBetween:format(self:FormatDuration(prevThreshold), endDuration)
+        return L.ColorRangeTo:format(self:FormatDuration(prevThreshold), endDuration)
+    end
+end
+
+function Addon:FormatDefaultColorRange(lastThreshold)
+    if lastThreshold then
+        return L.ColorRangeAbove:format(self:FormatDuration(lastThreshold))
+    else
+        return L.ColorRangeAll
     end
 end
 
@@ -64,13 +65,8 @@ end
 --------------------------------------------------------------------------------
 
 function Addon:ParseThreshold(val)
-    val = strtrim(val)
+    local num = tonumber(strtrim(val))
 
-    if val:lower() == "inf" or val:lower() == "infinite" or val:lower() == "forever" then
-        return math.huge
-    end
-
-    local num = tonumber(val)
     if num and num > 0 then
         return num
     end
@@ -79,14 +75,7 @@ function Addon:ParseThreshold(val)
 end
 
 function Addon:FormatThreshold(threshold)
-    if threshold == math.huge then
-        return "inf"
-    end
     return tostring(threshold)
-end
-
-function Addon:ValidateThreshold(val)
-    return self:ParseThreshold(val) ~= nil
 end
 
 --------------------------------------------------------------------------------
@@ -94,7 +83,7 @@ end
 --------------------------------------------------------------------------------
 
 -- Creates a range slider option for a theme property
-function Addon:CreateRangeOption(theme, property, opts)
+function Addon:CreateRangeOption(themeID, property, opts)
     local default = opts.default or 0
     local invert = opts.invert
 
@@ -110,17 +99,17 @@ function Addon:CreateRangeOption(theme, property, opts)
         softMax = opts.softMax,
         step = opts.step or 1,
         get = function()
-            local val = theme[property] or default
+            local val = tullaCTC.db.profile.themes[themeID][property] or default
             return invert and -val or val
         end,
         set = function(_, val)
-            self:SetThemeProperty(theme, property, invert and -val or val)
+            self:SetThemeProperty(themeID, property, invert and -val or val)
         end
     }
 end
 
 -- Creates a select dropdown option for a theme property
-function Addon:CreateSelectOption(theme, property, opts)
+function Addon:CreateSelectOption(themeID, property, opts)
     return {
         type = 'select',
         name = opts.name,
@@ -130,16 +119,16 @@ function Addon:CreateSelectOption(theme, property, opts)
         dialogControl = opts.dialogControl,
         values = opts.values,
         get = function()
-            return theme[property] or opts.default
+            return tullaCTC.db.profile.themes[themeID][property] or opts.default
         end,
         set = function(_, val)
-            self:SetThemeProperty(theme, property, val)
+            self:SetThemeProperty(themeID, property, val)
         end
     }
 end
 
 -- Creates a toggle checkbox option for a theme property
-function Addon:CreateToggleOption(theme, property, opts)
+function Addon:CreateToggleOption(themeID, property, opts)
     return {
         type = 'toggle',
         name = opts.name,
@@ -147,16 +136,16 @@ function Addon:CreateToggleOption(theme, property, opts)
         order = opts.order,
         width = opts.width,
         get = function()
-            return theme[property]
+            return tullaCTC.db.profile.themes[themeID][property]
         end,
         set = function(_, val)
-            self:SetThemeProperty(theme, property, val)
+            self:SetThemeProperty(themeID, property, val)
         end
     }
 end
 
 -- Creates a color picker option for a hex color theme property
-function Addon:CreateColorOption(theme, property, opts)
+function Addon:CreateColorOption(themeID, property, opts)
     local default = opts.default or "FFFFFFFF"
 
     return {
@@ -167,16 +156,16 @@ function Addon:CreateColorOption(theme, property, opts)
         width = opts.width,
         hasAlpha = opts.hasAlpha ~= false,
         get = function()
-            return self:HexToRGBA(theme[property] or default)
+            return self:HexToRGBA(tullaCTC.db.profile.themes[themeID][property] or default)
         end,
         set = function(_, r, g, b, a)
-            self:SetThemeProperty(theme, property, self:RGBAToHex(r, g, b, a))
+            self:SetThemeProperty(themeID, property, self:RGBAToHex(r, g, b, a))
         end
     }
 end
 
 -- Creates a tri-state select option (default/always/never)
-function Addon:CreateDrawStateOption(theme, property, opts)
+function Addon:CreateDrawStateOption(themeID, property, opts)
     return {
         type = 'select',
         name = opts.name,
@@ -190,10 +179,10 @@ function Addon:CreateDrawStateOption(theme, property, opts)
         },
         sorting = { "default", "always", "never" },
         get = function()
-            return theme[property] or "default"
+            return tullaCTC.db.profile.themes[themeID][property] or "default"
         end,
         set = function(_, val)
-            self:SetThemeProperty(theme, property, val)
+            self:SetThemeProperty(themeID, property, val)
         end
     }
 end

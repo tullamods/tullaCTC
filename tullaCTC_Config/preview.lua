@@ -24,7 +24,7 @@ PreviewDialog:EnableMouse(true)
 PreviewDialog:SetClampedToScreen(true)
 PreviewDialog:SetFrameStrata("TOOLTIP")
 PreviewDialog:SetMovable(true)
-PreviewDialog:SetSize(165, 155)
+PreviewDialog:SetSize(172, 172)
 PreviewDialog:SetToplevel(true)
 PreviewDialog:SetScript(
     "OnShow",
