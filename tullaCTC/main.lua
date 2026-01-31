@@ -136,6 +136,71 @@ function Addon:OnLoad()
 
     hooksecurefunc(cooldown_mt, 'Clear', stopCooldown)
 
+    -- hooks to preserve styling overrides when other code tries to change them
+    local function getThemeConfig(cooldown)
+        if cooldown:IsForbidden() then return end
+
+        local cdInfo = active[cooldown]
+        if not cdInfo or not cdInfo.theme then return end
+
+        return self.db.profile.themes[cdInfo.theme]
+    end
+
+    hooksecurefunc(cooldown_mt, 'SetHideCountdownNumbers', function(cooldown, hide)
+        local themeConfig = getThemeConfig(cooldown)
+        if not (themeConfig and themeConfig.enabled and themeConfig.themeText) then return end
+
+        if themeConfig.drawText == "always" and hide then
+            cooldown:SetHideCountdownNumbers(false)
+        elseif themeConfig.drawText == "never" and not hide then
+            cooldown:SetHideCountdownNumbers(true)
+        end
+    end)
+
+    hooksecurefunc(cooldown_mt, 'SetDrawBling', function(cooldown, draw)
+        local themeConfig = getThemeConfig(cooldown)
+        if not (themeConfig and themeConfig.enabled and themeConfig.themeCooldown) then return end
+
+        if themeConfig.drawBling == "always" and not draw then
+            cooldown:SetDrawBling(true)
+        elseif themeConfig.drawBling == "never" and draw then
+            cooldown:SetDrawBling(false)
+        end
+    end)
+
+    hooksecurefunc(cooldown_mt, 'SetDrawEdge', function(cooldown, draw)
+        local themeConfig = getThemeConfig(cooldown)
+        if not (themeConfig and themeConfig.enabled and themeConfig.themeCooldown) then return end
+
+        if themeConfig.drawEdge == "always" and not draw then
+            cooldown:SetDrawEdge(true)
+        elseif themeConfig.drawEdge == "never" and draw then
+            cooldown:SetDrawEdge(false)
+        end
+    end)
+
+    hooksecurefunc(cooldown_mt, 'SetDrawSwipe', function(cooldown, draw)
+        local themeConfig = getThemeConfig(cooldown)
+        if not (themeConfig and themeConfig.enabled and themeConfig.themeCooldown) then return end
+
+        if themeConfig.drawSwipe == "always" and not draw then
+            cooldown:SetDrawSwipe(true)
+        elseif themeConfig.drawSwipe == "never" and draw then
+            cooldown:SetDrawSwipe(false)
+        end
+    end)
+
+    hooksecurefunc(cooldown_mt, 'SetReverse', function(cooldown, reverse)
+        local themeConfig = getThemeConfig(cooldown)
+        if not (themeConfig and themeConfig.enabled and themeConfig.themeCooldown) then return end
+
+        if themeConfig.reverse == "always" and not reverse then
+            cooldown:SetReverse(true)
+        elseif themeConfig.reverse == "never" and reverse then
+            cooldown:SetReverse(false)
+        end
+    end)
+
     -- setup launcher commands
     local function showOptionsFrame()
         if C_AddOns.LoadAddOn(AddonName .. '_Config') then
@@ -319,15 +384,15 @@ do
     local refreshPending
     local function refresh()
         refreshPending = false
-    wipe(themers)
+        wipe(themers)
 
-    for _, cooldownInfo in pairs(active) do
+        for _, cooldownInfo in pairs(active) do
             local theme = Addon:GetThemeName(cooldownInfo.cooldown)
 
-        cooldownInfo.theme = theme
+            cooldownInfo.theme = theme
 
-        if theme then
-            themers[theme]:Apply(cooldownInfo)
+            if theme then
+                themers[theme]:Apply(cooldownInfo)
             end
         end
     end
