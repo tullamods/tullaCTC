@@ -17,7 +17,7 @@ local function getDrawStateBool(state)
     return nil
 end
 
-local function generateColorCurve(colorThresholds)
+local function generateColorCurve(colorThresholds, defaultColor)
     if not (colorThresholds and #colorThresholds > 0) then
         return
     end
@@ -30,10 +30,15 @@ local function generateColorCurve(colorThresholds)
     curve:SetType(Enum.LuaCurveType.Step)
 
     for i, entry in ipairs(colorThresholds) do
-        local startTime = (i > 1 and colorThresholds[i - 1].threshold or -1) + 0.5
+        local startTime = i > 1 and colorThresholds[i - 1].threshold or 0
         local color = CreateColorFromRGBAHexString(entry.color)
-
         curve:AddPoint(startTime, color)
+    end
+
+    -- add default color for durations above the last threshold
+    if defaultColor then
+        local lastThreshold = colorThresholds[#colorThresholds].threshold
+        curve:AddPoint(lastThreshold, CreateColorFromRGBAHexString(defaultColor))
     end
 
     return curve
@@ -52,7 +57,7 @@ function Addon:CreateThemer(config)
     local font, fontSize, fontFlags
     local point, offsetX, offsetY
     local shadowColor, shadowX, shadowY
-    local abbrevThreshold, minDurationMS, textColors
+    local abbrevThreshold, minDurationMS, textColors, defaultTextColor
 
     if themeText then
         if config.font then
@@ -72,7 +77,11 @@ function Addon:CreateThemer(config)
         abbrevThreshold = config.abbrevThreshold
         minDurationMS = config.minDuration * 1000
 
-        textColors = generateColorCurve(config.textColors)
+        if config.textColors and #config.textColors > 0 then
+            textColors = generateColorCurve(config.textColors, config.defaultTextColor)
+        elseif config.defaultTextColor then
+            defaultTextColor = CreateColorFromRGBAHexString(config.defaultTextColor)
+        end
     end
 
     -- cooldown settings
@@ -90,7 +99,6 @@ function Addon:CreateThemer(config)
 
     function themer:Apply(cdInfo)
         local cooldown = cdInfo.cooldown
-
         if drawText ~= nil then
             cooldown:SetHideCountdownNumbers(not drawText)
         end
@@ -109,7 +117,10 @@ function Addon:CreateThemer(config)
                 end
 
                 if textColors and cdInfo.duration then
-                    text:SetTextColor(cdInfo.duration:EvaluateRemainingDuration(textColors):GetRGBA())
+                    local color = cdInfo.duration:EvaluateRemainingDuration(textColors)
+                    text:SetTextColor(color:GetRGBA())
+                elseif defaultTextColor then
+                    text:SetTextColor(defaultTextColor:GetRGBA())
                 else
                     text:SetTextColor(1, 1, 1, 1)
                 end

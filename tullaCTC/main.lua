@@ -32,6 +32,7 @@ function Addon:OnLoad()
     db.RegisterCallback(self, 'OnProfileReset', 'Refresh')
 
     self.db = db
+    self:MigrateTextColors()
 
     -- setup hooks
     local initCooldown, stopCooldown, refreshCooldown
@@ -186,7 +187,8 @@ function Addon:GetDBDefaults()
                     -- font is a LSM font ID
                     font = "Friz Quadrata TT",
                     fontFlags = 'OUTLINE',
-                    fontSize = 18,
+                    -- setting a font size to zero will just let the ui handle sizing
+                    fontSize = 0,
 
                     -- text positioning
                     point = "CENTER",
@@ -207,25 +209,25 @@ function Addon:GetDBDefaults()
                     -- array of {threshold, color} entries
                     -- thresholds are specified in seconds and represent the
                     -- duration at which we want to start applying a color
-                    textColors = {
-                        { threshold = math.huge, color = "FFFFFFFF" },
-                    },
+                    textColors = {},
+                    -- color for all durations (when no thresholds defined)
+                    defaultTextColor = "FFFFFFFF",
                 },
 
                 -- default styling with conditional colors
                 default = {
                     displayName = DEFAULT,
-
+                    fontSize = 18,
                     textColors = {
                         -- soon (0 - 5s)
                         { threshold = 5, color = "FF6347FF" },
-                        -- minute (5 to 60)
+                        -- seconds (5 - 60s)
                         { threshold = 60, color = "FFFF00FF" },
-                        -- hours (61 to 3600)
+                        -- minutes (60 - 3600s)
                         { threshold = 3600, color = "FFFFFFFF" },
-                        -- the rest (3600+)
-                        { threshold = math.huge, color = "AAAAAAFF" },
-                    }
+                    },
+
+                    defaultTextColor = "AAAAAAFF"
                 },
 
                 disable = {
@@ -259,6 +261,23 @@ function Addon:StopTicker()
     if self.ticker then
         self.ticker:Cancel()
         self.ticker = nil
+    end
+end
+
+function Addon:MigrateTextColors()
+    local themes = self.db.profile.themes
+    if not themes then return end
+
+    for _, theme in pairs(themes) do
+        if type(theme) == "table" and theme.textColors then
+            for i = #theme.textColors, 1, -1 do
+                local entry = theme.textColors[i]
+                if entry.threshold == math.huge then
+                    theme.defaultTextColor = entry.color
+                    table.remove(theme.textColors, i)
+                end
+            end
+        end
     end
 end
 
