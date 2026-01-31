@@ -85,7 +85,13 @@ Addon:RegisterDurationProvider {
             return false
         end
 
-        local spellID = parent.spellID or parent:GetAttribute("spell")
+        local spellID
+        if type(parent.GetSpellID) == 'function' then
+            spellID = parent:GetSpellID()
+        else
+            spellID = parent.spellID
+        end
+
         if not spellID then
             return false
         end
