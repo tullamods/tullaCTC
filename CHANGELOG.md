@@ -1,5 +1,10 @@
 # tullaCTC Version History
 
+## v12.0.0-beta5
+
+* Added additional rules for unit frames and the encounter timeline
+* Adjusted the logic for matching charge coolowns to no longer use GetParentKey()
+
 ## v12.0.0-beta4
 
 * Added Use Aura Duration Display Time toggle (Thanks kerristrasz)
