@@ -17,7 +17,7 @@ The configuration UI can be brought up via `/tullaCTC`
 | Scale Text | Not Implemented | TBD |
 | Min Size | Not Implemented | I may not implement this one, as tullaCTC's rules engine is a bit better to work with |
 | Min Duration | Implemented | Automatic GCD filtering isn't implemented, but base duration filtering is |
-| Max Duration | Not Implemented | At the very least, should be able to make the text transparent when over a certain duration |
+| Max Duration | Not Implemented | As a workaround, add a new color threshold entry the duration you don't want to see and make the color transparent. |
 | Tenths of Seconds | Not Implemented | There's not enough presentational options available for me to do this quite yet, I think |
 | MM:SS Duration | Implemented | |
 | Text Position | Implemented | |
