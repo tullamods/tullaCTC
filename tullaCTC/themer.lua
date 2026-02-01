@@ -28,14 +28,14 @@ local function generateColorCurve(textColors, defaultColor)
     for i = 1, #textColors do
         local entry = textColors[i]
         local start = (i == 1 and 0) or (textColors[i - 1].threshold + offset)
-        local color = CreateColorFromRGBAHexString(entry.color)
+        local color = Addon.CreateColor(entry.color)
 
         curve:AddPoint(start, color)
     end
 
     if defaultColor then
         local start = textColors[#textColors].threshold + offset
-        local color = CreateColorFromRGBAHexString(defaultColor)
+        local color = Addon.CreateColor(defaultColor)
 
         curve:AddPoint(start, color)
     end
@@ -43,7 +43,7 @@ local function generateColorCurve(textColors, defaultColor)
     return curve
 end
 
--- themer objects are created to precompute of the properties we want to set on
+-- themer objects are created to precompute the properties we want to set on
 -- cooldowns to make things a tad bit more efficient
 function Addon:CreateThemer(config)
     if not config.enabled then
@@ -53,6 +53,7 @@ function Addon:CreateThemer(config)
     -- text settings
     local themeText = config.themeText
     local drawText = getDrawStateBool(config.drawText)
+    local useAuraDisplayTime
     local font, fontSize, fontFlags
     local point, offsetX, offsetY
     local shadowColor, shadowX, shadowY
@@ -69,31 +70,37 @@ function Addon:CreateThemer(config)
         offsetX = config.offsetX
         offsetY = config.offsetY
 
-        shadowColor = CreateColorFromRGBAHexString(config.shadowColor)
+        shadowColor = Addon.CreateColor(config.shadowColor)
         shadowX = config.shadowX
         shadowY = config.shadowY
 
         abbrevThreshold = config.abbrevThreshold
         minDurationMS = config.minDuration * 1000
+        useAuraDisplayTime = getDrawStateBool(config.useAuraDisplayTime)
 
         if config.textColors and #config.textColors > 0 then
             textColors = generateColorCurve(config.textColors, config.defaultTextColor)
         end
 
         if config.defaultTextColor then
-            defaultTextColor = CreateColorFromRGBAHexString(config.defaultTextColor)
+            defaultTextColor = Addon.CreateColor(config.defaultTextColor)
         end
     end
 
     -- cooldown settings
     local themeCooldown = config.themeCooldown
     local drawBling, drawEdge, drawSwipe, reverse
+    local swipeColor
 
     if themeCooldown then
         drawBling = getDrawStateBool(config.drawBling)
         drawEdge = getDrawStateBool(config.drawEdge)
         drawSwipe = getDrawStateBool(config.drawSwipe)
         reverse = getDrawStateBool(config.reverse)
+
+        if config.themeSwipeColor and config.swipeColor then
+            swipeColor = Addon.CreateColor(config.swipeColor)
+        end
     end
 
     local themer = {}
@@ -142,6 +149,10 @@ function Addon:CreateThemer(config)
             if minDurationMS then
                 cooldown:SetMinimumCountdownDuration(minDurationMS)
             end
+
+            if useAuraDisplayTime ~= nil then
+                cooldown:SetUseAuraDisplayTime(useAuraDisplayTime)
+            end
         end
 
         if themeCooldown then
@@ -161,8 +172,9 @@ function Addon:CreateThemer(config)
                 cooldown:SetReverse(reverse)
             end
 
-            -- TODO: consider the other mutable properties of cooldowns
-            -- like swipe, bling, and edge textures
+            if swipeColor then
+                cooldown:SetSwipeColor(swipeColor:GetRGBA())
+            end
         end
     end
 

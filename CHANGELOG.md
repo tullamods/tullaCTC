@@ -1,5 +1,10 @@
 # tullaCTC Version History
 
+## v12.0.0-beta4
+
+* Added Use Aura Duration Display Time toggle (Thanks kerristrasz)
+* Added the ability to override cooldown swipe colors (mostly useful for the cooldown manager)
+
 ## v12.0.0-beta3
 
 * Added nameplate support

@@ -167,19 +167,27 @@ local function createGeneralOptionsForTheme(themeID, order)
                         desc = L.DrawTextDesc,
                         order = 10,
                     }),
+
+                    drawEdge = Addon:CreateDrawStateOption(themeID, 'useAuraDisplayTime', {
+                        name = L.UseAuraDisplayTime,
+                        desc = L.UseAuraDisplayTimeDesc,
+                        order = 20,
+                    }),
+
                     minDuration = Addon:CreateRangeOption(themeID, 'minDuration', {
                         name = L.MinDuration,
                         desc = L.MinDurationDesc,
-                        order = 20,
+                        order = 30,
                         min = 0,
                         softMax = 60,
                         default = 3,
                         width = 'full'
                     }),
+
                     abbrevThreshold = Addon:CreateRangeOption(themeID, 'abbrevThreshold', {
                         name = L.AbbrevThreshold,
                         desc = L.AbbrevThresholdDesc,
-                        order = 30,
+                        order = 40,
                         min = 0,
                         softMax = 600,
                         default = 90,
@@ -223,7 +231,19 @@ local function createGeneralOptionsForTheme(themeID, order)
                         name = L.Reverse,
                         desc = L.ReverseDesc,
                         order = 140
-                    })
+                    }),
+
+                    themeSwipeColor = Addon:CreateToggleOption(themeID, 'themeSwipeColor', {
+                        name = L.ThemeSwipeColor,
+                        order = 150
+                    }),
+
+                    swipeColor = Addon:CreateColorOption(themeID, 'swipeColor', {
+                        name = L.SwipeColor,
+                        desc = L.SwipeColorDesc,
+                        order = 160,
+                        default = "00000000"
+                    }),
                 }
             }
         }
@@ -310,10 +330,10 @@ local function createColorOptionsForTheme(themeID, order)
                     width = 1,
                     hasAlpha = true,
                     get = function()
-                        return Addon:HexToRGBA(entry.color)
+                        return Addon.HexToRGBA(entry.color)
                     end,
                     set = function(_, r, g, b, a)
-                        local color = Addon:RGBAToHex(r, g, b, a)
+                        local color = Addon.RGBAToHex(r, g, b, a)
                         if Addon:SetTextColorValue(theme, i, color) then
                             Addon:RefreshThemeOptions()
                         end

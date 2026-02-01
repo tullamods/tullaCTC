@@ -5,26 +5,11 @@ local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
 local tullaCTC = _G.tullaCTC
 
 --------------------------------------------------------------------------------
--- Color Utilities
+-- Imports
 --------------------------------------------------------------------------------
 
-function Addon:HexToRGBA(hex)
-    local r = tonumber(hex:sub(1, 2), 16) / 255
-    local g = tonumber(hex:sub(3, 4), 16) / 255
-    local b = tonumber(hex:sub(5, 6), 16) / 255
-    local a = tonumber(hex:sub(7, 8), 16) / 255
-
-    return r, g, b, a
-end
-
-function Addon:RGBAToHex(r, g, b, a)
-    return ("%02X%02X%02X%02X"):format(
-        Round(r * 255),
-        Round(g * 255),
-        Round(b * 255),
-        Round(a * 255)
-    )
-end
+Addon.HexToRGBA = tullaCTC.HexToRGBA
+Addon.RGBAToHex = tullaCTC.RGBAToHex
 
 --------------------------------------------------------------------------------
 -- Duration Formatting
@@ -156,10 +141,10 @@ function Addon:CreateColorOption(themeID, property, opts)
         width = opts.width,
         hasAlpha = opts.hasAlpha ~= false,
         get = function()
-            return self:HexToRGBA(tullaCTC.db.profile.themes[themeID][property] or default)
+            return self.HexToRGBA(tullaCTC.db.profile.themes[themeID][property] or default)
         end,
         set = function(_, r, g, b, a)
-            self:SetThemeProperty(themeID, property, self:RGBAToHex(r, g, b, a))
+            self:SetThemeProperty(themeID, property, self.RGBAToHex(r, g, b, a))
         end
     }
 end
@@ -168,6 +153,7 @@ end
 function Addon:CreateDrawStateOption(themeID, property, opts)
     return {
         type = 'select',
+        style = 'radio',
         name = opts.name,
         desc = opts.desc,
         order = opts.order,

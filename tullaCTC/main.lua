@@ -166,63 +166,36 @@ function Addon:OnLoad()
         end
     end)
 
-    hooksecurefunc(cooldown_mt, 'SetDrawBling', function(cooldown, draw)
+    local function enforceCooldownSetting(method, setting)
+        hooksecurefunc(cooldown_mt, method, function(cooldown, value)
+            local theme = getActiveTheme(cooldown)
+            if not (theme and theme.themeText) then return end
+
+            if theme[setting] == "always" then
+                if issecretvalue(value) or not value then
+                    cooldown[method](cooldown, true)
+                end
+            elseif theme[setting] == "never" then
+                if issecretvalue(value) or value then
+                    cooldown[method](cooldown, false)
+                end
+            end
+        end)
+    end
+
+    enforceCooldownSetting('SetDrawBling', 'drawBling')
+    enforceCooldownSetting('SetDrawEdge', 'drawEdge')
+    enforceCooldownSetting('SetDrawSwipe', 'drawSwipe')
+    enforceCooldownSetting('SetReverse', 'reverse')
+    enforceCooldownSetting('SetUseAuraDisplayTime', 'useAuraDisplayTime')
+
+    hooksecurefunc(cooldown_mt, 'SetSwipeColor', function(cooldown, r, g, b, a)
         local theme = getActiveTheme(cooldown)
-        if not (theme and theme.themeText) then return end
+        if not (theme and theme.themeCooldown and theme.themeSwipeColor) then return end
 
-        if theme.drawBling == "always" then
-            if issecretvalue(draw) or not draw then
-                cooldown:SetDrawBling(true)
-            end
-        elseif theme.drawBling == "never" then
-            if issecretvalue(draw) or draw then
-                cooldown:SetDrawBling(false)
-            end
-        end
-    end)
-
-    hooksecurefunc(cooldown_mt, 'SetDrawEdge', function(cooldown, draw)
-        local theme = getActiveTheme(cooldown)
-        if not (theme and theme.themeCooldown) then return end
-
-        if theme.drawEdge == "always" then
-            if issecretvalue(draw) or not draw then
-                cooldown:SetDrawEdge(true)
-            end
-        elseif theme.drawEdge == "never" then
-            if issecretvalue(draw) or draw then
-                cooldown:SetDrawEdge(false)
-            end
-        end
-    end)
-
-    hooksecurefunc(cooldown_mt, 'SetDrawSwipe', function(cooldown, draw)
-        local theme = getActiveTheme(cooldown)
-        if not (theme and theme.themeCooldown) then return end
-
-        if theme.drawSwipe == "always" then
-            if issecretvalue(draw) or not draw then
-                cooldown:SetDrawSwipe(true)
-            end
-        elseif theme.drawSwipe == "never" then
-            if issecretvalue(draw) or draw then
-                cooldown:SetDrawSwipe(false)
-            end
-        end
-    end)
-
-    hooksecurefunc(cooldown_mt, 'SetReverse', function(cooldown, reverse)
-        local theme = getActiveTheme(cooldown)
-        if not (theme and theme.themeCooldown) then return end
-
-        if theme.reverse == "always" then
-            if issecretvalue(reverse) or not reverse then
-                cooldown:SetReverse(true)
-            end
-        elseif theme.reverse == "never" then
-            if issecretvalue(reverse) or reverse then
-                cooldown:SetReverse(false)
-            end
+        local cR, cG, cB, cA = Addon.HexToRGBA(theme.swipeColor)
+        if issecretvalue(r) or not (r == cR and g == cG and b == cB and a == cA) then
+            cooldown:SetSwipeColor(cR, cG, cB, cA)
         end
     end)
 
@@ -239,13 +212,13 @@ function Addon:OnLoad()
         return false
     end
 
-	if AddonCompartmentFrame then
-		AddonCompartmentFrame:RegisterAddon{
-			text = C_AddOns.GetAddOnMetadata(AddonName, "Title"),
-			icon = C_AddOns.GetAddOnMetadata(AddonName, "IconTexture"),
-			func = showOptionsFrame,
-		}
-	end
+    if AddonCompartmentFrame then
+        AddonCompartmentFrame:RegisterAddon{
+            text = C_AddOns.GetAddOnMetadata(AddonName, "Title"),
+            icon = C_AddOns.GetAddOnMetadata(AddonName, "IconTexture"),
+            func = showOptionsFrame,
+        }
+    end
 
     -- setup slash commands
     SlashCmdList[AddonName] = showOptionsFrame
@@ -262,7 +235,7 @@ function Addon:GetDBDefaults()
                     -- global theme toggle
                     enabled = true,
 
-                    -- basic on/of switches for styling groups
+                    -- basic toggles for styling groups
                     themeText = true,
                     themeCooldown = false,
 
@@ -273,6 +246,7 @@ function Addon:GetDBDefaults()
                     drawSwipe = "default",
                     drawText = "default",
                     reverse = "default",
+                    useAuraDisplayTime = "default",
 
                     -- cooldown text font settings
                     -- font is a LSM font ID
@@ -303,6 +277,10 @@ function Addon:GetDBDefaults()
                     textColors = {},
                     -- color for all durations (when no thresholds defined)
                     defaultTextColor = "FFFFFFFF",
+
+                    -- swipe color
+                    themeSwipeColor = false,
+                    swipeColor = "000000CC",
                 },
 
                 -- default styling with conditional colors

@@ -62,6 +62,8 @@ L.ThresholdDesc = 'Duration threshold for this color range'
 L.Typography = 'Typography'
 L.TypographyDesc = 'Configure font and text appearance'
 L.VerticalOffset = 'Vertical Offset'
+L.UseAuraDisplayTime = 'Use Aura Duration Display Time'
+L.UseAuraDisplayTimeDesc = 'This setting effectively controls duration rounding. Always will round down. Never will round up'
 
 -- Color threshold UI
 L.AddColorThreshold = 'Add Color Threshold'
@@ -100,6 +102,9 @@ L.DrawBling = 'Show Bling'
 L.DrawBlingDesc = 'Control the flash effect when cooldown finishes'
 L.Reverse = 'Reverse'
 L.ReverseDesc = 'Reverse the swipe direction'
+L.SwipeColor = 'Swipe Color'
+L.SwipeColorDesc = 'Override the color of the cooldown swipe animation'
+L.ThemeSwipeColor = 'Override Swipe Color'
 
 -- Tri-state values
 L.DrawState_default = 'Default'

@@ -8,6 +8,7 @@
 ## Category: Combat
 embeds.xml
 api.lua
+utils.lua
 durations.lua
 rules.lua
 themer.lua
