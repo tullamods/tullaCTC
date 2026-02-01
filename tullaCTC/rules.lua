@@ -12,7 +12,7 @@ Addon:RegisterRule {
     priority = 100,
     match = function(cooldown)
         local parent = cooldown:GetParent()
-        return parent and parent.action and cooldown:GetParentKey() == "cooldown"
+        return parent and parent.action and parent.cooldown == cooldown
     end
 }
 
@@ -21,7 +21,7 @@ Addon:RegisterRule {
     priority = 110,
     match = function(cooldown)
         local parent = cooldown:GetParent()
-        return parent and parent.action and cooldown:GetParentKey() == "chargeCooldown"
+        return parent and parent.action and parent.chargeCooldown == cooldown
     end
 }
 
@@ -30,7 +30,7 @@ Addon:RegisterRule {
     priority = 120,
     match = function(cooldown)
         local parent = cooldown:GetParent()
-        return parent and parent.action and cooldown:GetParentKey() == "lossOfControlCooldown"
+        return parent and parent.action and parent.lossOfControlCooldown == cooldown
     end
 }
 
@@ -73,28 +73,28 @@ Addon:RegisterRule {
 
 -- Pet Action Bar
 Addon:RegisterRule {
-    id = "blizzard_pet",
+    id = "blizzard_petbar",
     priority = 300,
     match = Addon.MatchName("^PetActionButton%d+")
 }
 
 -- Stance/Shapeshift Bar
 Addon:RegisterRule {
-    id = "blizzard_stance",
+    id = "blizzard_stancebar",
     priority = 310,
     match = Addon.MatchName("^StanceButton%d+")
 }
 
 -- Possess Bar
 Addon:RegisterRule {
-    id = "blizzard_possess",
+    id = "blizzard_possessbar",
     priority = 320,
     match = Addon.MatchName("^PossessButton%d+")
 }
 
 -- Extra Action Button
 Addon:RegisterRule {
-    id = "blizzard_extra",
+    id = "blizzard_extrabar",
     priority = 330,
     match = Addon.MatchName("^ExtraActionButton%d+")
 }
@@ -116,11 +116,44 @@ Addon:RegisterRule {
     match = Addon.MatchName("^NamePlate%d+")
 }
 
--- Target Frame
 Addon:RegisterRule {
     id = "blizzard_target",
     priority = 410,
     match = Addon.MatchName("^TargetFrame")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_party",
+    priority = 410,
+    match = Addon.MatchName("^PartyFrame")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_raid",
+    priority = 420,
+    match = Addon.MatchName("^CompactRaidGroup")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_arena",
+    priority = 430,
+    match = Addon.MatchName("^CompactArenaFrame")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_pet",
+    priority = 440,
+    match = Addon.MatchName("^PetFrame")
+}
+
+--------------------------------------------------------------------------------
+-- Encounter Stuff
+--------------------------------------------------------------------------------
+---
+Addon:RegisterRule {
+    id = "blizzard_encounter_timeline",
+    priority = 500,
+    match = Addon.MatchName("^EncounterTimeline")
 }
 
 --------------------------------------------------------------------------------
@@ -130,7 +163,7 @@ Addon:RegisterRule {
 -- Items
 Addon:RegisterRule {
     id = "blizzard_container",
-    priority = 500,
+    priority = 600,
     match = Addon.MatchName(
         "^ContainerFrame",
         "^PaperDoll"
