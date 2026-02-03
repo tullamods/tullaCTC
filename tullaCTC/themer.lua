@@ -18,7 +18,9 @@ local function getDrawStateBool(state)
 end
 
 local function generateColorCurve(textColors, defaultColor)
-    table.sort(textColors, function(a, b) return a.threshold < b.threshold end)
+    table.sort(textColors, function(a, b)
+        return (a.threshold or 0) < (b.threshold or 0)
+    end)
 
     local curve = C_CurveUtil.CreateColorCurve()
     curve:SetType(Enum.LuaCurveType.Step)
