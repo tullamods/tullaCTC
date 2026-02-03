@@ -221,7 +221,18 @@ function Addon:OnLoad()
     end
 
     -- setup slash commands
-    SlashCmdList[AddonName] = showOptionsFrame
+    SlashCmdList[AddonName] = function(msg)
+        local cmd = msg and msg:lower():trim()
+        if cmd == "reset" then
+            db:ResetProfile()
+        elseif cmd == "version" then
+            local version = C_AddOns.GetAddOnMetadata(AddonName, "Version")
+            print("|cFFCC99FF" .. AddonName .. "|r " .. (version or UNKNOWN))
+        else
+            showOptionsFrame()
+        end
+    end
+
     SLASH_tullaCTC1 = '/' .. AddonName:lower()
     SLASH_tullaCTC2 = '/tctc'
 end
