@@ -15,6 +15,8 @@ local themers = setmetatable({}, {
 
 local cooldowns = setmetatable({}, {
     __index = function(self, cooldown)
+        if issecretvalue(cooldown) then return end
+
         local info = {
             cooldown = cooldown,
             -- some cooldowns (i'm looking at you, nameplates) aren't actually
@@ -70,21 +72,23 @@ function Addon:OnLoad()
     local startCooldown, stopCooldown, refreshCooldown
 
     startCooldown = function(cooldown, durationObject)
+        local info = cooldowns[cooldown]
+        if not info then
+            return
+        end
+
         if not hooked[cooldown] then
             cooldown:HookScript("OnShow", refreshCooldown)
             cooldown:HookScript("OnHide", stopCooldown)
             hooked[cooldown] = true
         end
 
-        local info = cooldowns[cooldown]
-        if info then
-            info.duration = durationObject
-            info.themeName = Addon:GetThemeName(cooldown)
-            themers[info.themeName]:Apply(info)
+        info.duration = durationObject
+        info.themeName = Addon:GetThemeName(cooldown)
+        themers[info.themeName]:Apply(info)
 
-            if durationObject then
-                self:StartTicker()
-            end
+        if durationObject then
+            self:StartTicker()
         end
     end
 
