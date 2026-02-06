@@ -1,5 +1,5 @@
--- tullaCTC configuration localization - Spanish
-local L = LibStub('AceLocale-3.0'):NewLocale('tullaCTC', 'esES')
+-- tullaCTC configuration localization - Latin American Spanish
+local L = LibStub('AceLocale-3.0'):NewLocale('tullaCTC', 'esMX')
 if not L then return end
 
 L.Anchor = 'Posición'

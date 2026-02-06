@@ -6,7 +6,8 @@
 ## LoadOnDemand: 1
 ## IconTexture: Interface/Icons/inv_misc_pocketwatch_02
 embeds.xml
-localization\localization.xml
+localization\default.lua
+localization\[TextLocale].lua
 utils.lua
 settings.lua
 preview.lua

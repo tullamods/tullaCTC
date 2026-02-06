@@ -1,5 +1,5 @@
--- tullaCTC configuration localization - deDE
-local L = LibStub("AceLocale-3.0"):NewLocale("tullaCTC", "deDE")
+-- tullaCTC configuration localization - German
+local L = LibStub('AceLocale-3.0'):NewLocale('tullaCTC', 'deDE')
 if not L then return end
 
 L.Anchor = 'Anker'
@@ -12,13 +12,103 @@ L.Anchor_RIGHT = 'Rechts'
 L.Anchor_TOP = 'Oben'
 L.Anchor_TOPLEFT = 'Oben links'
 L.Anchor_TOPRIGHT = 'Oben rechts'
-L.FontFace = "Schriftart"
-L.FontOutline = "Schriftumriss"
-L.FontSize = "Schriftgröße"
-L.HorizontalOffset = "Horizontaler Versatz"
-L.MinDuration = "Minimaldauer"
-L.Outline_NONE = NONE
-L.Outline_OUTLINE = "Dünn"
-L.Outline_OUTLINEMONOCHROME = "Einfarbig"
-L.Outline_THICKOUTLINE = "Dick"
-L.VerticalOffset = "Vertikaler Versatz"
+L.Colors = 'Farben'
+L.ColorsDesc = 'Textfarben basierend auf der verbleibenden Abklingzeit konfigurieren'
+L.ColorsDescription = 'Farbe und Schwellenwert für jeden Zeitbereich festlegen. Der Text verwendet die Farbe für Zeiten bis zum Schwellenwert.'
+L.CooldownText = 'Abklingzeit-Text'
+L.Duration = 'Dauer'
+L.FontFace = 'Schriftart'
+L.FontOutline = 'Schriftumriss'
+L.FontSize = 'Schriftgröße'
+L.HorizontalOffset = 'Horizontaler Versatz'
+L.MinDuration = 'Minimaldauer'
+L.MinDurationDesc = 'Wie lang eine Abklingzeit in Sekunden sein muss, um den Countdown-Text anzuzeigen'
+L.AbbrevThreshold = 'Abkürzungsschwelle'
+L.AbbrevThresholdDesc = 'Wie lang in Sekunden, bevor der Abklingzeit-Text auf abgekürztes Format wechselt (z.B. "1m" statt "60")'
+L.Outline_OUTLINE = 'Dünn'
+L.Outline_OUTLINEMONOCHROME = 'Einfarbig'
+L.Outline_THICKOUTLINE = 'Dick'
+L.TextColor = 'Textfarbe'
+L.TextFont = 'Textschriftart'
+L.TextPosition = 'Textposition'
+L.TextShadow = 'Textschatten'
+L.Themes = 'Themen'
+L.CreateTheme = 'Thema erstellen'
+L.CreateThemeDesc = 'Erstellt ein neues Thema mit dem angegebenen Namen'
+L.DeleteThemeDesc = 'Löscht das ausgewählte Thema'
+L.CopyTheme = 'Thema kopieren'
+L.CopyThemeDesc = 'Erstellt eine Kopie des aktuellen Themas'
+L.ResetTheme = 'Zurücksetzen'
+L.ResetThemeDesc = 'Setzt das aktuelle Thema auf Standardwerte zurück'
+L.RenameTheme = 'Umbenennen'
+L.RenameThemeDesc = 'Das ausgewählte Thema umbenennen'
+L.SelectTheme = 'Thema'
+L.ManageThemes = 'Themen'
+L.Threshold = 'Dauer (Sekunden)'
+L.ThresholdDesc = 'Schwellenwert für diesen Farbbereich'
+L.Typography = 'Typografie'
+L.TypographyDesc = 'Schrift und Textdarstellung konfigurieren'
+L.VerticalOffset = 'Vertikaler Versatz'
+L.UseAuraDisplayTime = 'Aura-Anzeigedauer verwenden'
+L.UseAuraDisplayTimeDesc = 'Diese Einstellung steuert die Rundung der Dauer. Immer rundet ab. Nie rundet auf'
+
+-- Color threshold UI
+L.AddColorThreshold = 'Farbschwelle hinzufügen'
+L.NewThresholdValue = 'Schwellenwert (Sekunden)'
+L.NewThresholdValueDesc = 'Schwellenwert in Sekunden eingeben (z.B. 5, 60, 3600)'
+L.RemoveThreshold = 'Entfernen'
+L.RemoveThresholdConfirm = 'Diese Farbschwelle entfernen?'
+L.ColorRangeDays = '%d Tag(e)'
+L.ColorRangeHours = '%d Stunde(n)'
+L.ColorRangeMinutes = '%d Minute(n)'
+L.ColorRangeSeconds = '%d Sekunde(n)'
+L.ColorRangeAbove = 'Über %s'
+L.ColorRangeOrLess = '%s oder weniger'
+L.ColorRangeTo = '%s bis %s'
+L.ColorRangeAll = 'Alle Zeiten'
+
+-- Theme settings
+L.ThemeEnabled = 'Thema aktivieren'
+L.ThemeEnabledDesc = 'Dieses Thema auf passende Abklingzeiten anwenden'
+L.ThemeText = 'Countdown-Text stylen'
+L.ThemeTextDesc = 'Textstil auf Abklingzeit-Countdowns anwenden'
+L.ThemeCooldown = 'Abklingzeit-Rahmen stylen'
+L.ThemeCooldownDesc = 'Stiloptionen für Abklingzeit-Rahmen anwenden'
+
+-- Cooldown display options
+L.Cooldown = 'Abklingzeit'
+L.CooldownDesc = 'Abklingzeit-Animationseinstellungen konfigurieren'
+L.DrawText = 'Text anzeigen'
+L.DrawTextDesc = 'Sichtbarkeit des Countdown-Texts steuern'
+L.DrawSwipe = 'Wischeffekt anzeigen'
+L.DrawSwipeDesc = 'Die radiale Wischanimation steuern'
+L.DrawEdge = 'Rand anzeigen'
+L.DrawEdgeDesc = 'Den leuchtenden Rand des Wischeffekts steuern'
+L.DrawBling = 'Blitz anzeigen'
+L.DrawBlingDesc = 'Den Blitzeffekt beim Ende der Abklingzeit steuern'
+L.Reverse = 'Umkehren'
+L.ReverseDesc = 'Richtung des Wischeffekts umkehren'
+L.SwipeColor = 'Wischfarbe'
+L.SwipeColorDesc = 'Farbe der Abklingzeit-Wischanimation überschreiben'
+L.ThemeSwipeColor = 'Wischfarbe überschreiben'
+
+-- Tri-state values
+L.DrawState_default = 'Standard'
+L.DrawState_always = 'Immer'
+L.DrawState_never = 'Nie'
+
+-- Rules
+L.Rules = 'Regeln'
+L.RulesDesc = 'Konfigurieren, welches Thema auf verschiedene UI-Elemente angewendet wird'
+L.RuleEnabled = 'Aktiviert'
+L.RuleEnabledDesc = 'Diese Regel aktivieren oder deaktivieren'
+L.RuleTheme = 'Thema'
+L.RuleThemeDesc = 'Auswählen, welches Thema bei Übereinstimmung dieser Regel angewendet wird'
+
+-- Builtin Rule Names
+L.Rule_action = 'Aktionstasten'
+L.Rule_action_charge = 'Aktionstasten - Aufladung'
+L.Rule_action_loc = 'Aktionstasten - Kontrollverlust'
+L.Rule_blizzard_zone = 'Zonenfähigkeit'
+L.Rule_blizzard_nameplates = 'Namensplaketten'
+L.Rule_everything = 'Alles Andere'
