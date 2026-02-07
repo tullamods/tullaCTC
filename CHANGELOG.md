@@ -1,5 +1,10 @@
 # tullaCTC Version History
 
+## v12.0.0-beta7
+
+* Added some fallback behavior to attempt to generate cooldown durations upon refresh
+* Added addon specific rules for Grid2 and ArcUI
+
 ## v12.0.0-beta6
 
 * Added the focus frame to the default ruleset
