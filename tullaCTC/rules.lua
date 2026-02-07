@@ -181,7 +181,7 @@ EventUtil.ContinueOnAddOnLoaded('ArcUI', function()
         id = "arcui",
         displayName = C_AddOns.GetAddOnMetadata("ArcUI", "Title"),
         priority = 710,
-        match = Addon.MatchName("^ArcUIIcon", "^ArcAurasIcon")
+        match = Addon.MatchName("^CDMGroups")
     }
 end)
 
@@ -190,7 +190,7 @@ EventUtil.ContinueOnAddOnLoaded('Grid2', function()
         id = "grid2",
         displayName = C_AddOns.GetAddOnMetadata("Grid2", "Title"),
         priority = 720,
-        match = Addon.MatchName("^Grid2LayoutHeader%d+UnitButton%d+")
+        match = Addon.MatchName("^Grid2Layout")
     }
 end)
 
