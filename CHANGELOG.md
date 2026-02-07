@@ -1,5 +1,12 @@
 # tullaCTC Version History
 
+## v12.0.0-beta6
+
+* Added the focus frame to the default ruleset
+* Added reset and version commands (`/tctc reset` and `/tctc version`)
+* Generated localization files for all locales.
+* Minor bugfixes for nil and secret values
+
 ## v12.0.0-beta5
 
 * Added additional rules for unit frames and the encounter timeline
