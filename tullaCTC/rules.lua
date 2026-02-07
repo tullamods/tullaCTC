@@ -113,12 +113,6 @@ Addon:RegisterRule {
 }
 
 Addon:RegisterRule {
-    id = "blizzard_target",
-    priority = 410,
-    match = Addon.MatchName("^TargetFrame")
-}
-
-Addon:RegisterRule {
     id = "blizzard_party",
     priority = 410,
     match = Addon.MatchName("^PartyFrame")
@@ -137,8 +131,20 @@ Addon:RegisterRule {
 }
 
 Addon:RegisterRule {
-    id = "blizzard_pet",
+    id = "blizzard_target",
     priority = 440,
+    match = Addon.MatchName("^TargetFrame")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_focus",
+    priority = 450,
+    match = Addon.MatchName("^FocusFrame")
+}
+
+Addon:RegisterRule {
+    id = "blizzard_pet",
+    priority = 460,
     match = Addon.MatchName("^PetFrame")
 }
 

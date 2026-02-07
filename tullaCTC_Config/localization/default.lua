@@ -130,6 +130,7 @@ L.Rule_blizzard_zone = 'Zone Ability'
 L.Rule_blizzard_container = HUD_EDIT_MODE_BAGS_LABEL
 L.Rule_blizzard_nameplates = 'Nameplates'
 L.Rule_blizzard_target = HUD_EDIT_MODE_TARGET_FRAME_LABEL
+L.Rule_blizzard_focus = HUD_EDIT_MODE_FOCUS_FRAME_LABEL
 L.Rule_blizzard_pet = HUD_EDIT_MODE_PET_FRAME_LABEL
 L.Rule_blizzard_party = HUD_EDIT_MODE_PARTY_FRAMES_LABEL
 L.Rule_blizzard_raid = HUD_EDIT_MODE_RAID_FRAMES_LABEL
