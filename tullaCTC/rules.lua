@@ -173,6 +173,28 @@ Addon:RegisterRule {
 }
 
 --------------------------------------------------------------------------------
+-- Addons
+--------------------------------------------------------------------------------
+
+EventUtil.ContinueOnAddOnLoaded('ArcUI', function()
+    Addon:RegisterRule {
+        id = "arcui",
+        displayName = C_AddOns.GetAddOnMetadata("ArcUI", "Title"),
+        priority = 710,
+        match = Addon.MatchName("^ArcUIIcon", "^ArcAurasIcon")
+    }
+end)
+
+EventUtil.ContinueOnAddOnLoaded('Grid2', function()
+    Addon:RegisterRule {
+        id = "grid2",
+        displayName = C_AddOns.GetAddOnMetadata("Grid2", "Title"),
+        priority = 720,
+        match = Addon.MatchName("^Grid2LayoutHeader%d+UnitButton%d+")
+    }
+end)
+
+--------------------------------------------------------------------------------
 -- ...And the rest!
 --------------------------------------------------------------------------------
 
