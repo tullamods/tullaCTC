@@ -9,7 +9,7 @@ local _, Addon = ...
 
 local function findProp(region, ...)
     local keyCount = select('#', ...)
-    local maxDepth = 3
+    local maxDepth = 4
     local depth = 0
 
     while region and depth < maxDepth do
