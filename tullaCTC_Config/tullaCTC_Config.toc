@@ -10,6 +10,7 @@ localization\default.lua
 localization\[TextLocale].lua
 utils.lua
 settings.lua
+profiles.lua
 preview.lua
 themes.lua
 rules.lua

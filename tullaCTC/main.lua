@@ -207,11 +207,7 @@ function Addon:OnLoad()
     -- setup launcher commands
     local function showOptionsFrame()
         if C_AddOns.LoadAddOn(AddonName .. '_Config') then
-            local dialog = LibStub('AceConfigDialog-3.0')
-
-            dialog:Open(AddonName)
-            dialog:SelectGroup(AddonName, "themes", DEFAULT)
-
+            Addon:OpenOptions()
             return true
         end
         return false

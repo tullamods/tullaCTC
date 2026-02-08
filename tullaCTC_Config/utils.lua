@@ -2,6 +2,7 @@
 
 local _, Addon = ...
 local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
+local AceGUI = LibStub('AceGUI-3.0')
 local tullaCTC = _G.tullaCTC
 
 --------------------------------------------------------------------------------
@@ -64,111 +65,122 @@ function Addon:FormatThreshold(threshold)
 end
 
 --------------------------------------------------------------------------------
--- AceConfig Option Builders
+-- AceGUI Widget Builders
 --------------------------------------------------------------------------------
 
--- Creates a range slider option for a theme property
-function Addon:CreateRangeOption(themeID, property, opts)
+-- Creates a checkbox widget for a theme property
+function Addon:AddCheckBox(parent, themeID, property, opts)
+    local widget = AceGUI:Create("CheckBox")
+
+    widget:SetLabel(opts.name)
+    if opts.width then widget:SetRelativeWidth(opts.width) end
+    if opts.fullWidth then widget:SetFullWidth(true) end
+    widget:SetValue(tullaCTC.db.profile.themes[themeID][property])
+
+    if opts.desc then
+        widget:SetCallback("OnEnter", function()
+            GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+            GameTooltip:SetText(opts.name, 1, 0.82, 0)
+            GameTooltip:AddLine(opts.desc, 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        widget:SetCallback("OnLeave", GameTooltip_Hide)
+    end
+
+    widget:SetCallback("OnValueChanged", function(_, _, val)
+        self:SetThemeProperty(themeID, property, val)
+    end)
+
+    parent:AddChild(widget)
+    return widget
+end
+
+-- Creates a slider widget for a theme property
+function Addon:AddSlider(parent, themeID, property, opts)
     local default = opts.default or 0
     local invert = opts.invert
 
-    return {
-        type = 'range',
-        name = opts.name,
-        desc = opts.desc,
-        order = opts.order,
-        width = opts.width,
-        min = opts.min,
-        max = opts.max,
-        softMin = opts.softMin,
-        softMax = opts.softMax,
-        step = opts.step or 1,
-        get = function()
-            local val = tullaCTC.db.profile.themes[themeID][property] or default
-            return invert and -val or val
-        end,
-        set = function(_, val)
-            self:SetThemeProperty(themeID, property, invert and -val or val)
-        end
-    }
+    local widget = AceGUI:Create("Slider")
+
+    widget:SetLabel(opts.name)
+    if opts.fullWidth then widget:SetFullWidth(true) end
+    if opts.width then widget:SetRelativeWidth(opts.width) end
+
+    local sliderMin = opts.softMin or opts.min or 0
+    local sliderMax = opts.softMax or opts.max or 100
+    widget:SetSliderValues(sliderMin, sliderMax, opts.step or 1)
+
+    local val = tullaCTC.db.profile.themes[themeID][property] or default
+    widget:SetValue(invert and -val or val)
+
+    widget:SetCallback("OnValueChanged", function(_, _, val)
+        self:SetThemeProperty(themeID, property, invert and -val or val)
+    end)
+
+    parent:AddChild(widget)
+    return widget
 end
 
--- Creates a select dropdown option for a theme property
-function Addon:CreateSelectOption(themeID, property, opts)
-    return {
-        type = 'select',
-        name = opts.name,
-        desc = opts.desc,
-        order = opts.order,
-        width = opts.width,
-        dialogControl = opts.dialogControl,
-        values = opts.values,
-        get = function()
-            return tullaCTC.db.profile.themes[themeID][property] or opts.default
-        end,
-        set = function(_, val)
-            self:SetThemeProperty(themeID, property, val)
-        end
-    }
+-- Creates a dropdown widget for a theme property
+function Addon:AddDropdown(parent, themeID, property, opts)
+    local widget = AceGUI:Create(opts.dialogControl or "Dropdown")
+
+    widget:SetLabel(opts.name)
+    if opts.width then widget:SetRelativeWidth(opts.width) end
+    if opts.fullWidth then widget:SetFullWidth(true) end
+    widget:SetList(opts.values)
+    widget:SetValue(tullaCTC.db.profile.themes[themeID][property] or opts.default)
+
+    widget:SetCallback("OnValueChanged", function(_, _, val)
+        self:SetThemeProperty(themeID, property, val)
+    end)
+
+    parent:AddChild(widget)
+    return widget
 end
 
--- Creates a toggle checkbox option for a theme property
-function Addon:CreateToggleOption(themeID, property, opts)
-    return {
-        type = 'toggle',
-        name = opts.name,
-        desc = opts.desc,
-        order = opts.order,
-        width = opts.width,
-        get = function()
-            return tullaCTC.db.profile.themes[themeID][property]
-        end,
-        set = function(_, val)
-            self:SetThemeProperty(themeID, property, val)
-        end
-    }
-end
-
--- Creates a color picker option for a hex color theme property
-function Addon:CreateColorOption(themeID, property, opts)
+-- Creates a color picker widget for a hex color theme property
+function Addon:AddColorPicker(parent, themeID, property, opts)
     local default = opts.default or "FFFFFFFF"
 
-    return {
-        type = 'color',
-        name = opts.name,
-        desc = opts.desc,
-        order = opts.order,
-        width = opts.width,
-        hasAlpha = opts.hasAlpha ~= false,
-        get = function()
-            return self.HexToRGBA(tullaCTC.db.profile.themes[themeID][property] or default)
-        end,
-        set = function(_, r, g, b, a)
-            self:SetThemeProperty(themeID, property, self.RGBAToHex(r, g, b, a))
-        end
-    }
+    local widget = AceGUI:Create("ColorPicker")
+
+    widget:SetLabel(opts.name)
+    if opts.width then widget:SetRelativeWidth(opts.width) end
+    if opts.fullWidth then widget:SetFullWidth(true) end
+    widget:SetHasAlpha(opts.hasAlpha ~= false)
+
+    local r, g, b, a = self.HexToRGBA(tullaCTC.db.profile.themes[themeID][property] or default)
+    widget:SetColor(r, g, b, a)
+
+    widget:SetCallback("OnValueConfirmed", function(_, _, r, g, b, a)
+        self:SetThemeProperty(themeID, property, self.RGBAToHex(r, g, b, a))
+    end)
+
+    parent:AddChild(widget)
+    return widget
 end
 
--- Creates a tri-state select option (default/always/never)
-function Addon:CreateDrawStateOption(themeID, property, opts)
-    return {
-        type = 'select',
-        style = 'radio',
-        name = opts.name,
-        desc = opts.desc,
-        order = opts.order,
-        width = opts.width,
-        values = {
-            default = L.DrawState_default,
-            always = L.DrawState_always,
-            never = L.DrawState_never
-        },
-        sorting = { "default", "always", "never" },
-        get = function()
-            return tullaCTC.db.profile.themes[themeID][property] or "default"
-        end,
-        set = function(_, val)
-            self:SetThemeProperty(themeID, property, val)
-        end
-    }
+-- Creates a tri-state dropdown (default/always/never) for a theme property
+function Addon:AddDrawStateDropdown(parent, themeID, property, opts)
+    local widget = AceGUI:Create("Dropdown")
+
+    widget:SetLabel(opts.name)
+    if opts.width then widget:SetRelativeWidth(opts.width) end
+    if opts.fullWidth then widget:SetFullWidth(true) end
+
+    widget:SetList({
+        default = L.DrawState_default,
+        always = L.DrawState_always,
+        never = L.DrawState_never,
+    }, { "default", "always", "never" })
+
+    widget:SetValue(tullaCTC.db.profile.themes[themeID][property] or "default")
+
+    widget:SetCallback("OnValueChanged", function(_, _, val)
+        self:SetThemeProperty(themeID, property, val)
+    end)
+
+    parent:AddChild(widget)
+    return widget
 end
