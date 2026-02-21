@@ -18,6 +18,8 @@ local function getDrawStateBool(state)
 end
 
 local function generateColorCurve(textColors, defaultColor)
+    if #textColors == 0 then return end
+
     table.sort(textColors, function(a, b)
         return (a.threshold or 0) < (b.threshold or 0)
     end)
@@ -27,16 +29,17 @@ local function generateColorCurve(textColors, defaultColor)
 
     local offset = 0.5
 
-    for i = 1, #textColors do
-        local entry = textColors[i]
-        local start = (i == 1 and 0) or (textColors[i - 1].threshold + offset)
-        local color = Addon.CreateColor(entry.color)
+    curve:AddPoint(0, Addon.CreateColor(textColors[1].color))
+
+    for i = 2, #textColors do
+        local start = (textColors[i - 1].threshold or 0) + offset
+        local color = Addon.CreateColor(textColors[i].color)
 
         curve:AddPoint(start, color)
     end
 
     if defaultColor then
-        local start = textColors[#textColors].threshold + offset
+        local start = (textColors[#textColors].threshold or 0) + offset
         local color = Addon.CreateColor(defaultColor)
 
         curve:AddPoint(start, color)
