@@ -140,6 +140,8 @@ function Addon:OnLoad()
 
     -- hooks to preserve styling overrides when other code tries to change them
     local function getActiveTheme(cooldown)
+        if issecretvalue(cooldown) then return end
+
         local info = rawget(cooldowns, cooldown)
         if info and info.themeName then
             local theme = Addon.db.profile.themes[info.themeName]
