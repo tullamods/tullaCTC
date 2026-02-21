@@ -68,7 +68,6 @@ local function onCooldownStart(cooldown, duration)
         cooldown:HookScript("OnShow", onCooldownShow)
         cooldown:HookScript("OnHide", onCooldownHide)
         cooldown:HookScript("OnCooldownDone", onCooldownDone)
-        cooldown:SetToplevel(true)
         hooked[cooldown] = true
     end
 
