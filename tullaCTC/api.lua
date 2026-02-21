@@ -107,10 +107,11 @@ function Addon:RegisterDurationProvider(provider)
     assert(type(provider.id) == "string", "provider.id must be a string")
     assert(type(provider.priority) == "number", "provider.priority must be a number")
     assert(type(provider.handle) == "function", "provider.handle must be a function")
-    assert(provider.displayName == nil or type(provider.displayName) == "string", "provider.displayName must be a string or nil")
+    assert(provider.displayName == nil or type(provider.displayName) == "string",
+        "provider.displayName must be a string or nil")
 
     for _, p in ipairs(durationProviders) do
-        assert(p.id ~= provider.id, format("a provider with id %q already exists", provider.id))
+        assert(p.id ~= provider.id, ("A provider with id %q already exists"):format(provider.id))
     end
 
     -- insert at sorted position
@@ -160,7 +161,7 @@ end
 --- @param ... string Lua patterns to match against the frame name
 --- @return fun(frame: Region): boolean matcher Function that returns true if the frame name matches any pattern
 function Addon.MatchName(...)
-    local patterns = {...}
+    local patterns = { ... }
 
     return function(region)
         local name

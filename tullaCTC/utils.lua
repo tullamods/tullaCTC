@@ -6,6 +6,7 @@ local _, Addon = ...
 -- Color Utilities
 --------------------------------------------------------------------------------
 
+-- local color = Addon:CreateColor("hexString")
 Addon.CreateColor = setmetatable({}, {
     __mode = "v",
     __call = function(self, hex)
@@ -23,6 +24,7 @@ Addon.CreateColor = setmetatable({}, {
 
             self[hex] = color
         end
+
         return color
     end
 })

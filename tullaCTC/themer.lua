@@ -4,7 +4,7 @@ local _, Addon = ...
 
 local NOOP = {
     Apply = function() end,
-    ApplyColor = function() end
+    Update = function() end
 }
 
 -- converts draw state enum values into a bool|nil
@@ -181,7 +181,7 @@ function Addon:CreateThemer(config)
     end
 
     if themeText and textColors then
-        function themer:ApplyColor(info)
+        function themer:Update(info)
             local duration = info.duration
 
             local color
@@ -198,7 +198,7 @@ function Addon:CreateThemer(config)
             end
         end
     else
-        themer.ApplyColor = NOOP.ApplyColor
+        themer.Update = NOOP.Update
     end
 
     return themer

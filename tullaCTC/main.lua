@@ -1,28 +1,17 @@
 local AddonName, Addon = ...
 local DB_NAME = AddonName .. 'DB'
 
+-- active cooldowns
+local active = {}
+
+-- cooldowns we've hooked
 local hooked = {}
 
-local themers = setmetatable({}, {
-    __index = function(self, key)
-        local themer = Addon:CreateThemer(Addon.db.profile.themes[key])
-
-        self[key] = themer
-
-        return themer
-    end
-})
-
+-- cooldown metadata
 local cooldowns = setmetatable({}, {
     __index = function(self, cooldown)
-        if issecretvalue(cooldown) then return end
-
         local info = {
             cooldown = cooldown,
-            -- some cooldowns (i'm looking at you, nameplates) aren't actually
-            -- linked up with their parents before the cooldown is set
-            name = Addon.GetRegionName(cooldown),
-            themeName = Addon:GetThemeName(cooldown),
             text = cooldown:GetCountdownFontString()
         }
 
@@ -31,7 +20,7 @@ local cooldowns = setmetatable({}, {
     end
 })
 
--- hopefully avoid repeatedly creating the same duration objects
+-- duration object cache
 local durations = setmetatable({}, {
     __call = function(self, endTime, duration, modRate)
         local key = ('%s:%s'):format(endTime, modRate or 1)
@@ -47,12 +36,52 @@ local durations = setmetatable({}, {
     end
 })
 
-local function handleUpdate()
-    if next(cooldowns) then
-        Addon:OnUpdate()
-    elseif Addon.ticker then
-        Addon.ticker:Cancel()
-        Addon.ticker = nil
+-- themer object cache
+local themers = setmetatable({}, {
+    __index = function(self, key)
+        local themer = Addon:CreateThemer(Addon.db.profile.themes[key])
+
+        self[key] = themer
+
+        return themer
+    end
+})
+
+local function onCooldownShow(self)
+    active[self] = true
+    Addon:StartTicker()
+end
+
+local function onCooldownHide(self)
+    active[self] = nil
+end
+
+local function onCooldownDone(self)
+    cooldowns[self] = nil
+    active[self] = nil
+end
+
+local function onCooldownStart(cooldown, duration)
+    if issecretvalue(cooldown) then return end
+
+    if not hooked[cooldown] then
+        cooldown:HookScript("OnShow", onCooldownShow)
+        cooldown:HookScript("OnHide", onCooldownHide)
+        cooldown:HookScript("OnCooldownDone", onCooldownDone)
+        cooldown:SetToplevel(true)
+        hooked[cooldown] = true
+    end
+
+    local info = cooldowns[cooldown]
+
+    info.themeName = Addon:GetThemeName(cooldown)
+    info.duration = duration
+
+    themers[info.themeName]:Apply(info)
+
+    if not active[cooldown] and cooldown:IsVisible() then
+        active[cooldown] = true
+        Addon:StartTicker()
     end
 end
 
@@ -68,61 +97,6 @@ function Addon:OnLoad()
     self:MigrateTextColors()
 
     -- setup hooks
-    local startCooldown, stopCooldown, refreshCooldown
-
-    startCooldown = function(cooldown, durationObject)
-        local info = cooldowns[cooldown]
-        if not info then
-            return
-        end
-
-        if not hooked[cooldown] then
-            cooldown:HookScript("OnShow", refreshCooldown)
-            cooldown:HookScript("OnHide", stopCooldown)
-            hooked[cooldown] = true
-        end
-
-        info.duration = durationObject
-        info.themeName = Addon:GetThemeName(cooldown)
-        themers[info.themeName]:Apply(info)
-
-        if durationObject and not Addon.ticker then
-            Addon.ticker = C_Timer.NewTicker(0.1, handleUpdate)
-        end
-    end
-
-    stopCooldown = function(cooldown)
-        cooldowns[cooldown] = nil
-
-        if Addon.ticker and not next(cooldowns) then
-            Addon.ticker:Cancel()
-            Addon.ticker = nil
-        end
-    end
-
-    refreshCooldown = function(cooldown)
-        if issecretvalue(cooldown) then return end
-
-        local durationObject = Addon:GetDuration(cooldown)
-        if not durationObject then
-            local displayDuration = cooldown:GetCooldownDisplayDuration()
-            if canaccessvalue(displayDuration) then
-                local start, duration = cooldown:GetCooldownTimes()
-                local modRate
-
-                if displayDuration > 0 then
-                    modRate = duration / displayDuration
-                else
-                    modRate = 1
-                end
-
-                durationObject = durations((start +  duration) / 1000, duration / 1000, modRate)
-            end
-        end
-
-        startCooldown(cooldown, durationObject)
-    end
-
     local cooldown_mt = getmetatable(ActionButton1Cooldown).__index
 
     hooksecurefunc(cooldown_mt, 'SetCooldown', function(cooldown, start, duration, modRate)
@@ -133,7 +107,7 @@ function Addon:OnLoad()
             durationObject = Addon:GetDuration(cooldown)
         end
 
-        startCooldown(cooldown, durationObject)
+        onCooldownStart(cooldown, durationObject)
     end)
 
     hooksecurefunc(cooldown_mt, 'SetCooldownDuration', function(cooldown, duration, modRate)
@@ -144,11 +118,11 @@ function Addon:OnLoad()
             durationObject = Addon:GetDuration(cooldown)
         end
 
-        startCooldown(cooldown, durationObject)
+        onCooldownStart(cooldown, durationObject)
     end)
 
     hooksecurefunc(cooldown_mt, 'SetCooldownFromDurationObject', function(cooldown, durationObject)
-        startCooldown(cooldown, durationObject)
+        onCooldownStart(cooldown, durationObject)
     end)
 
     hooksecurefunc(cooldown_mt, 'SetCooldownFromExpirationTime', function(cooldown, expirationTime, duration, modRate)
@@ -159,10 +133,10 @@ function Addon:OnLoad()
             durationObject = Addon:GetDuration(cooldown)
         end
 
-        startCooldown(cooldown, durationObject)
+        onCooldownStart(cooldown, durationObject)
     end)
 
-    hooksecurefunc(cooldown_mt, 'Clear', stopCooldown)
+    hooksecurefunc(cooldown_mt, 'Clear', onCooldownDone)
 
     -- hooks to preserve styling overrides when other code tries to change them
     local function getActiveTheme(cooldown)
@@ -237,7 +211,7 @@ function Addon:OnLoad()
     end
 
     if AddonCompartmentFrame then
-        AddonCompartmentFrame:RegisterAddon{
+        AddonCompartmentFrame:RegisterAddon {
             text = C_AddOns.GetAddOnMetadata(AddonName, "Title"),
             icon = C_AddOns.GetAddOnMetadata(AddonName, "IconTexture"),
             func = showOptionsFrame,
@@ -310,6 +284,7 @@ function Addon:GetDBDefaults()
                     -- thresholds are specified in seconds and represent the
                     -- duration at which we want to start applying a color
                     textColors = {},
+
                     -- color for all durations (when no thresholds defined)
                     defaultTextColor = "FFFFFFFF",
 
@@ -322,9 +297,9 @@ function Addon:GetDBDefaults()
                 default = {
                     textColors = {
                         -- soon (0 - 5s)
-                        { threshold = 5, color = "FF6347FF" },
+                        { threshold = 5,    color = "FF6347FF" },
                         -- seconds (5 - 60s)
-                        { threshold = 60, color = "FFFF00FF" },
+                        { threshold = 60,   color = "FFFF00FF" },
                         -- minutes (60 - 3600s)
                         { threshold = 3600, color = "FFFFFFFF" },
                     },
@@ -333,7 +308,7 @@ function Addon:GetDBDefaults()
                 },
 
                 none = {
-                    enabled  = false
+                    enabled = false
                 }
             },
 
@@ -366,30 +341,22 @@ function Addon:MigrateTextColors()
 end
 
 function Addon:OnUpdate()
-    for cd, info in pairs(cooldowns) do
-        -- try and retrieve the name of a cooldown if we don't know it yet
-        local name = info.name
-        if not name then
-            name = Addon.GetRegionName(cd)
-            if name then
-                info.name = name
+    for cooldown in pairs(active) do
+        local info = cooldowns[cooldown]
+        local themeName = Addon:GetThemeName(cooldown)
 
-                local themeName = Addon:GetThemeName(cd)
-                if themeName ~= info.themeName then
-                    info.themeName = themeName
-                    themers[themeName]:Apply(info)
-                else
-                    themers[themeName]:ApplyColor(info)
-                end
-            else
-                themers[info.themeName]:ApplyColor(info)
-            end
+        if info.themeName ~= themeName then
+            info.themeName = themeName
+            themers[themeName]:Apply(info)
         else
-            themers[info.themeName]:ApplyColor(info)
+            local duration = info.duration
+            if duration then
+                themers[themeName]:ApplyColor(info)
+            end
         end
     end
 
-    -- cleanup: purge expired durations from cache
+    -- purge expired durations from cache
     for key, duration in pairs(durations) do
         if duration:IsZero() then
             durations[key] = nil
@@ -418,23 +385,52 @@ end
 -- throttle refresh since it can be called a bunch by the config ui
 do
     local refreshPending
-    local function refreshCooldowns()
-        refreshPending = false
-
+    local function restyleCooldowns()
         wipe(themers)
-        for cooldown, info in pairs(cooldowns) do
+
+        for cooldown in pairs(active) do
+            local info = cooldowns[cooldown]
             local themeName = Addon:GetThemeName(cooldown)
 
             info.themeName = themeName
-
             themers[themeName]:Apply(info)
         end
+
+        refreshPending = false
     end
 
     function Addon:Refresh()
         if not refreshPending then
             refreshPending = true
-            C_Timer.After(0, refreshCooldowns)
+            C_Timer.After(0, restyleCooldowns)
+        end
+    end
+end
+
+do
+    local function onUpdate()
+        if next(active) then
+            for cooldown in pairs(active) do
+                local info = rawget(cooldowns, cooldown)
+                if info then
+                    local themeName = Addon:GetThemeName(cooldown)
+                    if info.themeName ~= themeName then
+                        info.themeName = themeName
+                        themers[themeName]:Apply(info)
+                    else
+                        themers[themeName]:Update(info)
+                    end
+                end
+            end
+        elseif Addon.ticker then
+            Addon.ticker:Cancel()
+            Addon.ticker = nil
+        end
+    end
+
+    function Addon:StartTicker()
+        if not self.ticker then
+            self.ticker = C_Timer.NewTicker(0.1, onUpdate)
         end
     end
 end

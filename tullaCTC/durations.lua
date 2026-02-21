@@ -36,20 +36,20 @@ Addon:RegisterDurationProvider {
             return false
         end
 
-        local action = parent.action
-        if not action then
+        local actionID = parent.action
+        if type(actionID) ~= "number" then
             return false
         end
 
         if parent.chargeCooldown == cooldown then
-            return true, C_ActionBar.GetActionChargeDuration(action)
+            return true, C_ActionBar.GetActionChargeDuration(actionID)
         end
 
         if parent.lossOfControlCooldown == cooldown then
-            return true, C_ActionBar.GetActionLossOfControlCooldownDuration(action)
+            return true, C_ActionBar.GetActionLossOfControlCooldownDuration(actionID)
         end
 
-        return true, C_ActionBar.GetActionCooldownDuration(action)
+        return true, C_ActionBar.GetActionCooldownDuration(actionID)
     end
 }
 
@@ -63,7 +63,7 @@ Addon:RegisterDurationProvider {
         end
 
         local auraInstanceID = findProp(parent, 'auraInstanceID')
-        if not auraInstanceID then
+        if type(auraInstanceID) ~= "number" then
             return false
         end
 
@@ -92,7 +92,7 @@ Addon:RegisterDurationProvider {
             spellID = parent.spellID
         end
 
-        if not spellID then
+        if type(spellID) ~= "number" then
             return false
         end
 
