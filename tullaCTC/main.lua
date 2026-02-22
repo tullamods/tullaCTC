@@ -47,18 +47,24 @@ local themers = setmetatable({}, {
     end
 })
 
-local function onCooldownShow(self)
-    active[self] = true
+local function onCooldownShow(cooldown)
+    if issecretvalue(cooldown) then return end
+
+    active[cooldown] = true
     Addon:StartTicker()
 end
 
-local function onCooldownHide(self)
-    active[self] = nil
+local function onCooldownHide(cooldown)
+    if issecretvalue(cooldown) then return end
+
+    active[cooldown] = nil
 end
 
-local function onCooldownDone(self)
-    cooldowns[self] = nil
-    active[self] = nil
+local function onCooldownDone(cooldown)
+    if issecretvalue(cooldown) then return end
+
+    cooldowns[cooldown] = nil
+    active[cooldown] = nil
 end
 
 local function onCooldownStart(cooldown, duration)
