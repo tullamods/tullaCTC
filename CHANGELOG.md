@@ -1,5 +1,9 @@
 # tullaCTC Version History
 
+## v12.0.0-beta9
+
+* Fixed an error that would occur when calling the `Clear` method on a secret cooldown.
+ 
 ## v12.0.0-beta8
 
 * More minor bugfixes
