@@ -1,12 +1,10 @@
 local _, Addon = ...
 local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
-local LSM = LibStub('LibSharedMedia-3.0')
-local AceGUI = LibStub('AceGUI-3.0')
 local tullaCTC = _G.tullaCTC
 
---------------------------------------------------------------------------------
--- Static Popup Dialogs
---------------------------------------------------------------------------------
+local PAD = Addon.PAD
+local SPACING = Addon.SPACING
+local DROPDOWN_HEIGHT = Addon.DROPDOWN_HEIGHT
 
 StaticPopupDialogs["TULLACTC_NEW_THEME"] = {
     text = L.EnterThemeName,
@@ -33,7 +31,7 @@ StaticPopupDialogs["TULLACTC_NEW_THEME"] = {
 }
 
 StaticPopupDialogs["TULLACTC_COPY_THEME"] = {
-    text = L.EnterCopyName,
+    text = L.EnterThemeName,
     button1 = ACCEPT,
     button2 = CANCEL,
     hasEditBox = true,
@@ -69,7 +67,32 @@ StaticPopupDialogs["TULLACTC_DELETE_THEME"] = {
     hideOnEscape = true,
 }
 
--- Track the currently selected theme
+StaticPopupDialogs["TULLACTC_RENAME_THEME"] = {
+    text = L.EnterThemeName,
+    button1 = ACCEPT,
+    button2 = CANCEL,
+    hasEditBox = true,
+    OnShow = function(self, themeID)
+        self.editBox:SetText(Addon.GetThemeDisplayName(themeID) or "")
+        self.editBox:HighlightText()
+    end,
+    OnAccept = function(self, themeID)
+        local name = self.editBox:GetText():trim()
+        if name ~= "" then
+            Addon:SetThemeProperty(themeID, 'displayName', name)
+            if activeRefreshContent then activeRefreshContent() end
+        end
+    end,
+    EditBoxOnEnterPressed = function(self)
+        self:GetParent().button1:Click()
+    end,
+    EditBoxOnEscapePressed = function(self)
+        self:GetParent():Hide()
+    end,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
 local selectedThemeId = "default"
 
 local function getSelectedThemeID()
@@ -84,23 +107,16 @@ local function setSelectedThemeId(id)
     return false
 end
 
-local function getThemeDisplayName(id)
-    local theme = tullaCTC.db.profile.themes[id]
-    if theme then
-        return theme.displayName or rawget(L, 'Theme_' .. id) or id
-    end
-    return id
-end
+local activeRefreshContent = nil
+local activeColorRefresh = nil
 
 function Addon:SelectAndRefreshTheme(id)
     if setSelectedThemeId(id) then
-        self:RefreshThemePanel()
+        if activeRefreshContent then
+            activeRefreshContent()
+        end
     end
 end
-
---------------------------------------------------------------------------------
--- Theme Context Menu
---------------------------------------------------------------------------------
 
 local function generateThemeMenu(_, rootDescription)
     local themes = tullaCTC.db.profile.themes
@@ -111,18 +127,32 @@ local function generateThemeMenu(_, rootDescription)
     end
 
     table.sort(order, function(a, b)
-        return getThemeDisplayName(a) < getThemeDisplayName(b)
+        return Addon.GetThemeDisplayName(a) < Addon.GetThemeDisplayName(b)
     end)
 
     for _, id in ipairs(order) do
-        local name = getThemeDisplayName(id)
+        local name = Addon.GetThemeDisplayName(id)
 
-        local themeEntry = rootDescription:CreateButton(name, function()
-            Addon:SelectAndRefreshTheme(id)
-        end)
+        local themeEntry = rootDescription:CreateRadio(name,
+            function() return getSelectedThemeID() == id end,
+            function() Addon:SelectAndRefreshTheme(id) end)
 
         themeEntry:CreateButton(L.CopyTheme, function()
             StaticPopup_Show("TULLACTC_COPY_THEME", nil, nil, id)
+        end)
+
+        if id ~= "default" then
+            themeEntry:CreateButton(L.RenameTheme, function()
+                StaticPopup_Show("TULLACTC_RENAME_THEME", nil, nil, id)
+            end)
+        end
+
+        themeEntry:CreateDivider()
+
+        themeEntry:CreateButton(L.ResetTheme, function()
+            if Addon:ResetTheme(id) then
+                Addon:RefreshThemeTree()
+            end
         end)
 
         if id ~= "default" then
@@ -139,450 +169,410 @@ local function generateThemeMenu(_, rootDescription)
     end)
 end
 
---------------------------------------------------------------------------------
--- Tree Node Builders
---------------------------------------------------------------------------------
+local addColorDialog = nil
 
-local function buildGeneralOptions(container, themeID)
-    container:SetLayout("Flow")
+local function showAddColorDialog(theme)
+    if not addColorDialog then
+        local dlg = CreateFrame("Frame", "TullaCTCAddColorDialog", UIParent, "BasicFrameTemplateWithInset")
+        dlg:SetSize(280, 152)
+        dlg:SetPoint("CENTER")
+        dlg:SetClampedToScreen(true)
+        dlg:SetFrameStrata("DIALOG")
+        dlg:SetMovable(true)
+        dlg:RegisterForDrag("LeftButton")
+        dlg:SetScript("OnDragStart", dlg.StartMoving)
+        dlg:SetScript("OnDragStop", dlg.StopMovingOrSizing)
+        dlg.TitleText:SetText(L.AddColorThreshold)
+        dlg.CloseButton:SetScript("OnClick", function() dlg:Hide() end)
+        tinsert(UISpecialFrames, "TullaCTCAddColorDialog")
 
-    Addon:AddCheckBox(container, themeID, 'enabled', {
+        local LABEL_W = 70
+        local MARGIN = PAD + 4
+        local CONTROL_X = MARGIN + LABEL_W + PAD
+        local ROW_H = 24
+        local ROW_Y1 = 40
+        local ROW_Y2 = ROW_Y1 + ROW_H + SPACING
+
+        local durationLabel = dlg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        durationLabel:SetSize(LABEL_W, ROW_H)
+        durationLabel:SetPoint("TOPLEFT", dlg, "TOPLEFT", MARGIN, -ROW_Y1)
+        durationLabel:SetJustifyH("RIGHT")
+        durationLabel:SetJustifyV("MIDDLE")
+        durationLabel:SetText(L.Duration)
+
+        local durationBox = CreateFrame("EditBox", nil, dlg, "InputBoxTemplate")
+        durationBox:SetHeight(20)
+        durationBox:SetAutoFocus(false)
+        durationBox:SetNumeric(true)
+        durationBox:SetPoint("TOPLEFT", dlg, "TOPLEFT", CONTROL_X, -(ROW_Y1 + 2))
+        durationBox:SetPoint("TOPRIGHT", dlg, "TOPRIGHT", -MARGIN, -(ROW_Y1 + 2))
+        dlg.durationBox = durationBox
+
+        local colorLabel = dlg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        colorLabel:SetSize(LABEL_W, ROW_H)
+        colorLabel:SetPoint("TOPLEFT", dlg, "TOPLEFT", MARGIN, -ROW_Y2)
+        colorLabel:SetJustifyH("RIGHT")
+        colorLabel:SetJustifyV("MIDDLE")
+        colorLabel:SetText(L.TextColor)
+
+        local swatchBtn = CreateFrame("Button", nil, dlg)
+        swatchBtn:SetSize(26, 25)
+        swatchBtn:SetPoint("TOPLEFT", dlg, "TOPLEFT", CONTROL_X, -ROW_Y2)
+
+        local swBg = swatchBtn:CreateTexture(nil, "BACKGROUND")
+        swBg:SetAtlas("common-dropdown-c-button", TextureKitConstants.UseAtlasSize)
+        swBg:SetPoint("CENTER")
+
+        local swTex = swatchBtn:CreateTexture(nil, "ARTWORK")
+        swTex:SetPoint("TOPLEFT", 4, -3)
+        swTex:SetPoint("BOTTOMRIGHT", -4, 3)
+
+        local function updateSwatch()
+            local r, g, b, a = Addon.HexToRGBA(dlg.pendingColor)
+            swTex:SetColorTexture(r, g, b, a)
+        end
+        dlg.updateSwatch = updateSwatch
+
+        swatchBtn:SetScript("OnClick", function()
+            local r, g, b, a = Addon.HexToRGBA(dlg.pendingColor)
+            ColorPickerFrame:SetupColorPickerAndShow({
+                r = r, g = g, b = b,
+                opacity = 1 - a, hasOpacity = true,
+                swatchFunc = function()
+                    local r2, g2, b2 = ColorPickerFrame:GetColorRGB()
+                    local a2 = 1 - ColorPickerFrame:GetColorAlpha()
+                    dlg.pendingColor = Addon.RGBAToHex(r2, g2, b2, a2)
+                    updateSwatch()
+                end,
+                cancelFunc = function(prev)
+                    dlg.pendingColor = Addon.RGBAToHex(prev.r, prev.g, prev.b, 1 - (prev.opacity or 0))
+                    updateSwatch()
+                end,
+            })
+        end)
+
+        local acceptBtn = CreateFrame("Button", nil, dlg, "UIPanelButtonTemplate")
+        acceptBtn:SetSize(80, 22)
+        acceptBtn:SetPoint("BOTTOMRIGHT", dlg, "BOTTOM", -PAD / 2, PAD + 4)
+        acceptBtn:SetText(ACCEPT)
+
+        local function tryAccept()
+            local threshold = Addon:ParseThreshold(dlg.durationBox:GetNumber())
+            if threshold and Addon:AddTextColorEntry(dlg.currentTheme, threshold, dlg.pendingColor) then
+                Addon:RefreshThemeTree()
+                dlg:Hide()
+            end
+        end
+
+        acceptBtn:SetScript("OnClick", tryAccept)
+        durationBox:SetScript("OnEnterPressed", tryAccept)
+        durationBox:SetScript("OnEscapePressed", function() dlg:Hide() end)
+
+        local cancelBtn = CreateFrame("Button", nil, dlg, "UIPanelButtonTemplate")
+        cancelBtn:SetSize(80, 22)
+        cancelBtn:SetPoint("BOTTOMLEFT", dlg, "BOTTOM", PAD / 2, PAD + 4)
+        cancelBtn:SetText(CANCEL)
+        cancelBtn:SetScript("OnClick", function() dlg:Hide() end)
+
+        addColorDialog = dlg
+    end
+
+    addColorDialog.currentTheme = theme
+    addColorDialog.pendingColor = "FFFFFFFF"
+    addColorDialog.updateSwatch()
+    addColorDialog.durationBox:SetText("")
+    addColorDialog:Show()
+    addColorDialog.durationBox:SetFocus()
+end
+
+local function makeSectionHeader(parent, text)
+    local h = CreateFrame("Frame", nil, parent, "SettingsListSectionHeaderTemplate")
+    h:SetHeight(45)
+    h.Title:SetText(text)
+    return h
+end
+
+local function makeSectionCheckBox(parent, themeID, property, title, desc)
+    local h = CreateFrame("Frame", nil, parent, "SettingsListSectionHeaderTemplate")
+    h:SetHeight(45)
+    h.Title:SetText(title)
+
+    local cb = CreateFrame("CheckButton", nil, h, "SettingsCheckboxTemplate")
+    cb:SetPoint("LEFT", h, "LEFT", 0, 0)
+    h.Title:ClearAllPoints()
+    h.Title:SetPoint("LEFT", cb, "RIGHT", PAD, 0)
+    cb:Init(tullaCTC.db.profile.themes[themeID][property])
+    if cb.HoverBackground then cb.HoverBackground:Hide() end
+
+    local updating = false
+    cb:RegisterCallback(SettingsCheckboxMixin.Event.OnValueChanged, function(_, checked)
+        if not updating then
+            Addon:SetThemeProperty(themeID, property, checked)
+        end
+    end)
+
+    function h:Refresh(newID)
+        themeID = newID
+        updating = true
+        cb:Init(tullaCTC.db.profile.themes[themeID][property])
+        updating = false
+    end
+
+    return h
+end
+
+local function makeSubSectionHeader(parent, text)
+    local h = CreateFrame("Frame", nil, parent, "SettingsListSectionHeaderTemplate")
+    h:SetHeight(35)
+    h.Title:SetFontObject(GameFontNormal)
+    h.Title:SetText(text)
+    return h
+end
+
+local function buildThemeContent(scrollChild, initialThemeID)
+    local layout = Addon.StackLayout(scrollChild, PAD, PAD, SPACING)
+    local refreshables = {}
+
+    local function addWidget(w)
+        layout:Add(w)
+        if w.Refresh then
+            refreshables[#refreshables + 1] = w
+        end
+        return w
+    end
+
+    addWidget(Addon:AddCheckBox(scrollChild, initialThemeID, 'enabled', {
         name = L.ThemeEnabled,
         desc = L.ThemeEnabledDesc,
-        fullWidth = true,
-    })
+    }))
 
-    -- cooldown text section
-    local textGroup = AceGUI:Create("InlineGroup")
-    textGroup:SetTitle(L.CooldownText)
-    textGroup:SetFullWidth(true)
-    textGroup:SetLayout("Flow")
-
-    Addon:AddCheckBox(textGroup, themeID, 'themeText', {
-        name = L.ThemeText,
-        desc = L.ThemeTextDesc,
-        fullWidth = true,
-    })
-
-    Addon:AddDrawStateDropdown(textGroup, themeID, 'drawText', {
-        name = L.DrawText,
-        desc = L.DrawTextDesc,
-    })
-
-    Addon:AddDrawStateDropdown(textGroup, themeID, 'useAuraDisplayTime', {
-        name = L.UseAuraDisplayTime,
-        desc = L.UseAuraDisplayTimeDesc,
-    })
-
-    Addon:AddSlider(textGroup, themeID, 'minDuration', {
-        name = L.MinDuration,
-        desc = L.MinDurationDesc,
-        min = 0,
-        softMax = 60,
-        default = 3,
-        fullWidth = true,
-    })
-
-    Addon:AddSlider(textGroup, themeID, 'abbrevThreshold', {
-        name = L.AbbrevThreshold,
-        desc = L.AbbrevThresholdDesc,
-        min = 0,
-        softMax = 600,
-        default = 90,
-        fullWidth = true,
-    })
-
-    container:AddChild(textGroup)
-
-    -- cooldown frame section
-    local cdGroup = AceGUI:Create("InlineGroup")
-    cdGroup:SetTitle(L.Cooldown)
-    cdGroup:SetFullWidth(true)
-    cdGroup:SetLayout("Flow")
-
-    Addon:AddCheckBox(cdGroup, themeID, 'themeCooldown', {
-        name = L.ThemeCooldown,
-        desc = L.ThemeCooldownDesc,
-        fullWidth = true,
-    })
-
-    Addon:AddDrawStateDropdown(cdGroup, themeID, 'drawSwipe', {
+    addWidget(makeSectionCheckBox(scrollChild, initialThemeID, 'themeCooldown', L.CooldownAppearance, L.ThemeCooldownDesc))
+    addWidget(Addon:AddDrawStateDropdown(scrollChild, initialThemeID, 'drawSwipe', {
         name = L.DrawSwipe,
         desc = L.DrawSwipeDesc,
-    })
-
-    Addon:AddDrawStateDropdown(cdGroup, themeID, 'drawEdge', {
+    }))
+    addWidget(Addon:AddDrawStateDropdown(scrollChild, initialThemeID, 'drawEdge', {
         name = L.DrawEdge,
         desc = L.DrawEdgeDesc,
-    })
-
-    Addon:AddDrawStateDropdown(cdGroup, themeID, 'drawBling', {
+    }))
+    addWidget(Addon:AddDrawStateDropdown(scrollChild, initialThemeID, 'drawBling', {
         name = L.DrawBling,
         desc = L.DrawBlingDesc,
-    })
-
-    Addon:AddDrawStateDropdown(cdGroup, themeID, 'reverse', {
+    }))
+    addWidget(Addon:AddDrawStateDropdown(scrollChild, initialThemeID, 'reverse', {
         name = L.Reverse,
         desc = L.ReverseDesc,
-    })
-
-    Addon:AddCheckBox(cdGroup, themeID, 'themeSwipeColor', {
-        name = L.ThemeSwipeColor,
-    })
-
-    Addon:AddColorPicker(cdGroup, themeID, 'swipeColor', {
+    }))
+    addWidget(Addon:AddCheckBoxColorPicker(scrollChild, initialThemeID, 'themeSwipeColor', 'swipeColor', {
         name = L.SwipeColor,
         desc = L.SwipeColorDesc,
         default = "00000000",
-    })
+    }))
 
-    container:AddChild(cdGroup)
-end
+    addWidget(makeSectionCheckBox(scrollChild, initialThemeID, 'themeText', L.CountdownText, L.ThemeTextDesc))
+    addWidget(Addon:AddDrawStateDropdown(scrollChild, initialThemeID, 'drawText', {
+        name = L.DrawText,
+        desc = L.DrawTextDesc,
+    }))
+    addWidget(Addon:AddDrawStateDropdown(scrollChild, initialThemeID, 'useAuraDisplayTime', {
+        name = L.UseAuraDisplayTime,
+        desc = L.UseAuraDisplayTimeDesc,
+    }))
+    addWidget(Addon:AddSlider(scrollChild, initialThemeID, 'minDuration', {
+        name = L.MinDuration,
+        desc = L.MinDurationDesc,
+        min = 0, max = 60, default = 3,
+    }))
+    addWidget(Addon:AddSlider(scrollChild, initialThemeID, 'tenthsThreshold', {
+        name = L.TenthsThreshold,
+        desc = L.TenthsThresholdDesc,
+        min = 0, max = 10, default = 0,
+    }))
+    addWidget(Addon:AddSlider(scrollChild, initialThemeID, 'abbrevThreshold', {
+        name = L.AbbrevThreshold,
+        desc = L.AbbrevThresholdDesc,
+        min = 0, max = 600, default = 90,
+    }))
 
-local function buildTextOptions(container, themeID)
-    container:SetLayout("Flow")
-
-    -- font section
-    local fontGroup = AceGUI:Create("InlineGroup")
-    fontGroup:SetTitle(L.TextFont)
-    fontGroup:SetFullWidth(true)
-    fontGroup:SetLayout("Flow")
-
-    -- font face via LSM widget
-    local fontWidget = AceGUI:Create("LSM30_Font")
-    fontWidget:SetLabel(L.FontFace)
-    fontWidget:SetList(LSM:HashTable('font'))
-    fontWidget:SetValue(tullaCTC.db.profile.themes[themeID].font)
-    fontWidget:SetFullWidth(true)
-    fontWidget:SetCallback("OnValueChanged", function(_, _, val)
-        Addon:SetThemeProperty(themeID, 'font', val)
-    end)
-    fontGroup:AddChild(fontWidget)
-
-    Addon:AddDropdown(fontGroup, themeID, 'fontFlags', {
+    layout:Add(makeSubSectionHeader(scrollChild, L.TextFont))
+    addWidget(Addon:AddFontSelector(scrollChild, initialThemeID, 'font', { name = L.FontFace }))
+    addWidget(Addon:AddDropdown(scrollChild, initialThemeID, 'fontFlags', {
         name = L.FontOutline,
-        default = 'OUTLINE',
-        fullWidth = true,
         values = {
-            [''] = L.Outline_NONE,
-            OUTLINE = L.Outline_OUTLINE,
-            THICKOUTLINE = L.Outline_THICKOUTLINE,
+            ['']                    = L.Outline_NONE,
+            ['OUTLINE']             = L.Outline_OUTLINE,
+            ['THICKOUTLINE']        = L.Outline_THICKOUTLINE,
             ['OUTLINE, MONOCHROME'] = L.Outline_OUTLINEMONOCHROME,
         },
-    })
+        order = { '', 'OUTLINE', 'THICKOUTLINE', 'OUTLINE, MONOCHROME' },
+    }))
+    addWidget(Addon:AddSlider(scrollChild, initialThemeID, 'fontSize', {
+        name = L.FontSize, min = 0, max = 36,
+    }))
 
-    Addon:AddSlider(fontGroup, themeID, 'fontSize', {
-        name = L.FontSize,
-        min = 0,
-        softMax = 36,
-        fullWidth = true,
-    })
+    layout:Add(makeSubSectionHeader(scrollChild, L.TextShadow))
+    addWidget(Addon:AddColorPicker(scrollChild, initialThemeID, 'shadowColor', {
+        name = L.TextShadowColor, default = "00000000",
+    }))
+    addWidget(Addon:AddSlider(scrollChild, initialThemeID, 'shadowX', {
+        name = L.HorizontalOffset, min = -4, max = 4,
+    }))
+    addWidget(Addon:AddSlider(scrollChild, initialThemeID, 'shadowY', {
+        name = L.VerticalOffset, min = -4, max = 4, invert = true,
+    }))
 
-    container:AddChild(fontGroup)
-
-    -- shadow section
-    local shadowGroup = AceGUI:Create("InlineGroup")
-    shadowGroup:SetTitle(L.TextShadow)
-    shadowGroup:SetFullWidth(true)
-    shadowGroup:SetLayout("Flow")
-
-    Addon:AddColorPicker(shadowGroup, themeID, 'shadowColor', {
-        name = L.TextShadowColor,
-        default = "00000000",
-    })
-
-    Addon:AddSlider(shadowGroup, themeID, 'shadowX', {
-        name = L.HorizontalOffset,
-        softMin = -4,
-        softMax = 4,
-        fullWidth = true,
-    })
-
-    Addon:AddSlider(shadowGroup, themeID, 'shadowY', {
-        name = L.VerticalOffset,
-        softMin = -4,
-        softMax = 4,
-        invert = true,
-        fullWidth = true,
-    })
-
-    container:AddChild(shadowGroup)
-
-    -- position section
-    local posGroup = AceGUI:Create("InlineGroup")
-    posGroup:SetTitle(L.TextPosition)
-    posGroup:SetFullWidth(true)
-    posGroup:SetLayout("Flow")
-
-    Addon:AddDropdown(posGroup, themeID, 'point', {
+    layout:Add(makeSubSectionHeader(scrollChild, L.TextPosition))
+    addWidget(Addon:AddDropdown(scrollChild, initialThemeID, 'point', {
         name = L.Anchor,
-        default = 'CENTER',
-        fullWidth = true,
         values = {
-            TOPLEFT = L.Anchor_TOPLEFT,
-            TOP = L.Anchor_TOP,
-            TOPRIGHT = L.Anchor_TOPRIGHT,
-            LEFT = L.Anchor_LEFT,
-            CENTER = L.Anchor_CENTER,
-            RIGHT = L.Anchor_RIGHT,
-            BOTTOMLEFT = L.Anchor_BOTTOMLEFT,
-            BOTTOM = L.Anchor_BOTTOM,
-            BOTTOMRIGHT = L.Anchor_BOTTOMRIGHT,
+            TOPLEFT = L.Anchor_TOPLEFT, TOP = L.Anchor_TOP, TOPRIGHT = L.Anchor_TOPRIGHT,
+            LEFT    = L.Anchor_LEFT,    CENTER = L.Anchor_CENTER,  RIGHT = L.Anchor_RIGHT,
+            BOTTOMLEFT = L.Anchor_BOTTOMLEFT, BOTTOM = L.Anchor_BOTTOM, BOTTOMRIGHT = L.Anchor_BOTTOMRIGHT,
         },
-    })
+        order = { 'TOPLEFT','TOP','TOPRIGHT','LEFT','CENTER','RIGHT','BOTTOMLEFT','BOTTOM','BOTTOMRIGHT' },
+    }))
+    addWidget(Addon:AddSlider(scrollChild, initialThemeID, 'offsetX', {
+        name = L.HorizontalOffset, min = -18, max = 18,
+    }))
+    addWidget(Addon:AddSlider(scrollChild, initialThemeID, 'offsetY', {
+        name = L.VerticalOffset, min = -18, max = 18, invert = true,
+    }))
 
-    Addon:AddSlider(posGroup, themeID, 'offsetX', {
-        name = L.HorizontalOffset,
-        softMin = -18,
-        softMax = 18,
-        fullWidth = true,
-    })
-
-    Addon:AddSlider(posGroup, themeID, 'offsetY', {
-        name = L.VerticalOffset,
-        softMin = -18,
-        softMax = 18,
-        invert = true,
-        fullWidth = true,
-    })
-
-    container:AddChild(posGroup)
-end
-
-local function buildColorOptions(container, themeID)
-    container:SetLayout("Flow")
-
-    local theme = tullaCTC.db.profile.themes[themeID]
-
-    -- description
-    local desc = AceGUI:Create("Label")
-    desc:SetText(L.ColorsDescription)
-    desc:SetFullWidth(true)
-    container:AddChild(desc)
-
-    local spacer = AceGUI:Create("Label")
-    spacer:SetText(" ")
-    spacer:SetFullWidth(true)
-    container:AddChild(spacer)
-
-    -- add threshold row
-    local addGroup = AceGUI:Create("InlineGroup")
-    addGroup:SetTitle(L.AddColorThreshold)
-    addGroup:SetFullWidth(true)
-    addGroup:SetLayout("Flow")
-
-    local addEditBox = AceGUI:Create("EditBox")
-    addEditBox:SetLabel(L.NewThresholdValue)
-    addEditBox:SetRelativeWidth(0.6)
-    addEditBox:SetCallback("OnEnterPressed", function(widget, _, val)
-        local threshold = Addon:ParseThreshold(val)
-        if threshold and Addon:AddTextColorEntry(theme, threshold) then
-            widget:SetText("")
-            Addon:RefreshThemeTree()
-        end
+    local colorsHeader = makeSectionHeader(scrollChild, L.CountdownTextColors)
+    local addBtn = CreateFrame("Button", nil, colorsHeader, "UIPanelButtonTemplate")
+    addBtn:SetSize(60, 22)
+    addBtn:SetPoint("RIGHT", colorsHeader, "RIGHT", 0, 0)
+    addBtn:SetText(ADD)
+    addBtn:SetScript("OnClick", function()
+        showAddColorDialog(tullaCTC.db.profile.themes[getSelectedThemeID()])
     end)
-    addGroup:AddChild(addEditBox)
-    container:AddChild(addGroup)
+    layout:Add(colorsHeader)
 
-    -- color threshold entries
-    local entries = Addon:GetSortedTextColors(theme)
-    local prevThreshold = nil
-
-    for i, entry in ipairs(entries) do
-        local threshold = entry.threshold
-
-        local group = AceGUI:Create("InlineGroup")
-        group:SetTitle(Addon:FormatEffectiveRange(prevThreshold, threshold))
-        group:SetFullWidth(true)
-        group:SetLayout("Flow")
-
-        local thresholdBox = AceGUI:Create("EditBox")
-        thresholdBox:SetLabel(L.Threshold)
-        thresholdBox:SetText(tostring(entry.threshold))
-        thresholdBox:SetRelativeWidth(0.35)
-        thresholdBox:SetCallback("OnEnterPressed", function(widget, _, val)
-            local newThreshold = Addon:ParseThreshold(val)
-            if newThreshold and Addon:SetTextColorThreshold(theme, i, newThreshold) then
-                Addon:RefreshThemeTree()
-            else
-                widget:SetText(tostring(entry.threshold))
-            end
-        end)
-        group:AddChild(thresholdBox)
-
-        local colorPicker = AceGUI:Create("ColorPicker")
-        colorPicker:SetLabel(L.TextColor)
-        colorPicker:SetHasAlpha(true)
-        colorPicker:SetRelativeWidth(0.35)
-        local r, g, b, a = Addon.HexToRGBA(entry.color)
-        colorPicker:SetColor(r, g, b, a)
-        colorPicker:SetCallback("OnValueConfirmed", function(_, _, r, g, b, a)
-            local color = Addon.RGBAToHex(r, g, b, a)
-            Addon:SetTextColorValue(theme, i, color)
-        end)
-        group:AddChild(colorPicker)
-
-        local removeBtn = AceGUI:Create("Button")
-        removeBtn:SetText(L.RemoveThreshold)
-        removeBtn:SetRelativeWidth(0.25)
-        removeBtn:SetCallback("OnClick", function()
-            if Addon:RemoveTextColorEntry(theme, i) then
-                Addon:RefreshThemeTree()
-            end
-        end)
-        group:AddChild(removeBtn)
-
-        container:AddChild(group)
-        prevThreshold = threshold
-    end
-
-    -- default color
-    local defaultGroup = AceGUI:Create("InlineGroup")
-    defaultGroup:SetTitle(Addon:FormatDefaultColorRange(prevThreshold))
-    defaultGroup:SetFullWidth(true)
-    defaultGroup:SetLayout("Flow")
-
-    Addon:AddColorPicker(defaultGroup, themeID, 'defaultTextColor', {
-        name = L.TextColor,
-    })
-
-    container:AddChild(defaultGroup)
+    return refreshables, layout.y
 end
 
-local function buildManagementOptions(container, themeID)
-    container:SetLayout("Flow")
-
-    -- rename (only for non-default themes)
-    if themeID ~= "default" then
-        local renameBox = AceGUI:Create("EditBox")
-        renameBox:SetLabel(L.RenameTheme)
-        renameBox:SetFullWidth(true)
-        renameBox:SetCallback("OnEnterPressed", function(widget, _, val)
-            val = strtrim(val)
-            if val ~= '' then
-                Addon:SetThemeProperty(themeID, 'displayName', val)
-                widget:SetText("")
-                Addon:RefreshThemePanel()
-            end
-        end)
-        container:AddChild(renameBox)
-    end
-
-    -- reset
-    local resetBtn = AceGUI:Create("Button")
-    resetBtn:SetText(L.ResetTheme)
-    resetBtn:SetFullWidth(true)
-    resetBtn:SetCallback("OnClick", function()
-        if Addon:ResetTheme(themeID) then
-            Addon:RefreshThemeTree()
-        end
-    end)
-    container:AddChild(resetBtn)
-end
-
---------------------------------------------------------------------------------
--- Tree Group Builders
---------------------------------------------------------------------------------
-
-local TREE_ITEMS = {
-    { value = "general", text = L.General },
-    { value = "text", text = L.Typography },
-    { value = "colors", text = L.Colors },
-    { value = "manage", text = L.ManageThemes },
-}
-
-local TREE_BUILDERS = {
-    general = buildGeneralOptions,
-    text = buildTextOptions,
-    colors = buildColorOptions,
-    manage = buildManagementOptions,
-}
-
-local activeTree
-
-local function onTreeGroupSelected(container, _, group)
-    container:ReleaseChildren()
-
-    local scroll = AceGUI:Create("ScrollFrame")
-    scroll:SetLayout("Flow")
-
-    local builder = TREE_BUILDERS[group]
-    if builder then
-        builder(scroll, getSelectedThemeID())
-    end
-
-    container:AddChild(scroll)
-end
-
--- Refresh just the tree content (e.g., after a color threshold change)
 function Addon:RefreshThemeTree()
-    if activeTree then
-        local status = activeTree.status or activeTree.localstatus
-        local selected = status and status.selected
-        onTreeGroupSelected(activeTree, nil, selected or "general")
-    end
+    if activeColorRefresh then activeColorRefresh() end
 end
 
--- Refresh the entire theme panel (e.g., after theme switch/create/delete)
 function Addon:RefreshThemePanel()
-    if Addon._buildThemePanel then
-        Addon._buildThemePanel()
-    end
+    if activeRefreshContent then activeRefreshContent() end
 end
-
---------------------------------------------------------------------------------
--- Main Theme Panel
---------------------------------------------------------------------------------
 
 function Addon:BuildThemePanel(container)
-    container:SetLayout("Flow")
+    local toolbar = CreateFrame("Frame", nil, container)
+    toolbar:SetHeight(DROPDOWN_HEIGHT + PAD * 2)
+    toolbar:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
+    toolbar:SetPoint("TOPRIGHT", container, "TOPRIGHT", 0, 0)
 
-    -- title
-    local title = AceGUI:Create("Label")
-    title:SetText("|cFFFFD100" .. L.Themes .. "|r  -  " .. L.ThemesDesc)
-    title:SetFontObject(GameFontNormalLarge)
-    title:SetFullWidth(true)
-    container:AddChild(title)
+    local themeLabel = toolbar:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    themeLabel:SetText(L.SelectTheme)
+    themeLabel:SetPoint("LEFT", toolbar, "LEFT", PAD, 0)
 
-    -- toolbar: theme selector + preview button
-    local toolbar = AceGUI:Create("SimpleGroup")
-    toolbar:SetFullWidth(true)
-    toolbar:SetLayout("Flow")
+    local themeDD = CreateFrame("DropdownButton", nil, toolbar, "WowStyle1DropdownTemplate")
+    themeDD:SetSize(140, DROPDOWN_HEIGHT)
+    themeDD:SetPoint("LEFT", themeLabel, "RIGHT", PAD, 0)
+    themeDD:SetupMenu(generateThemeMenu)
 
-    local themeButton = AceGUI:Create("Button")
-    themeButton:SetText(getThemeDisplayName(getSelectedThemeID()))
-    themeButton:SetRelativeWidth(0.7)
-    themeButton:SetCallback("OnClick", function(widget)
-        MenuUtil.CreateContextMenu(widget.frame, generateThemeMenu)
-    end)
-    toolbar:AddChild(themeButton)
-
-    local previewBtn = AceGUI:Create("Button")
+    local previewBtn = CreateFrame("Button", nil, toolbar, "UIPanelButtonTemplate")
+    previewBtn:SetSize(80, 22)
+    previewBtn:SetPoint("RIGHT", toolbar, "RIGHT", -PAD, 0)
     previewBtn:SetText(L.Preview)
-    previewBtn:SetRelativeWidth(0.25)
-    previewBtn:SetCallback("OnClick", function()
+    previewBtn:SetScript("OnClick", function()
         self.PreviewDialog:SetTheme(getSelectedThemeID())
     end)
-    toolbar:AddChild(previewBtn)
 
-    container:AddChild(toolbar)
+    local divider = container:CreateTexture(nil, "ARTWORK")
+    divider:SetHeight(1)
+    divider:SetColorTexture(0.3, 0.3, 0.3, 1)
+    divider:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, 0)
+    divider:SetPoint("TOPRIGHT", toolbar, "BOTTOMRIGHT", -14, 0)
 
-    -- tree group for theme options
-    local tree = AceGUI:Create("TreeGroup")
-    tree:SetTree(TREE_ITEMS)
-    tree:SetFullWidth(true)
-    tree:SetFullHeight(true)
-    tree:SetLayout("Fill")
-    tree:SetCallback("OnGroupSelected", onTreeGroupSelected)
-    tree:SelectByValue("general")
+    local scrollBox = CreateFrame("Frame", nil, container, "WowScrollBox")
+    local scrollBar = CreateFrame("EventFrame", nil, container, "MinimalScrollBar")
 
-    activeTree = tree
+    scrollBox:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, -1)
+    scrollBox:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -14, 0)
 
-    container:AddChild(tree)
+    scrollBar:SetPoint("TOPLEFT", scrollBox, "TOPRIGHT", 2, -10)
+    scrollBar:SetPoint("BOTTOMLEFT", scrollBox, "BOTTOMRIGHT", 2, 10)
 
-    -- store rebuild function for RefreshThemePanel
-    self._buildThemePanel = function()
-        container:ReleaseChildren()
-        self:BuildThemePanel(container)
+    local scrollChild = CreateFrame("Frame", nil, scrollBox)
+    scrollChild.scrollable = true
+
+    local view = CreateScrollBoxLinearView()
+    view:SetPanExtent(50)
+    ScrollUtil.InitScrollBoxWithScrollBar(scrollBox, scrollBar, view)
+
+    scrollChild:ClearAllPoints()
+    scrollChild:SetPoint("TOPLEFT", scrollBox.ScrollTarget, "TOPLEFT", 0, 0)
+    scrollChild:SetPoint("TOPRIGHT", scrollBox.ScrollTarget, "TOPRIGHT", 0, 0)
+
+    local refreshables, colorRowsY = buildThemeContent(scrollChild, getSelectedThemeID())
+
+    local colorSection = CreateFrame("Frame", nil, scrollChild)
+    colorSection:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", PAD, -colorRowsY)
+    colorSection:SetPoint("TOPRIGHT", scrollChild, "TOPRIGHT", -PAD, -colorRowsY)
+
+    local colorRowPool = Addon:BuildColorRowPool(colorSection)
+    local defaultColorPicker = Addon:AddColorPicker(colorSection, getSelectedThemeID(), 'defaultTextColor', {
+        name = "",
+    })
+
+    local function layoutColorSection()
+        local y = 0
+        for _, row in ipairs(colorRowPool) do
+            if row:IsShown() then
+                row:ClearAllPoints()
+                row:SetPoint("TOPLEFT", colorSection, "TOPLEFT", 0, -y)
+                row:SetPoint("TOPRIGHT", colorSection, "TOPRIGHT", 0, -y)
+                y = y + row:GetHeight() + SPACING
+            end
+        end
+        defaultColorPicker:ClearAllPoints()
+        defaultColorPicker:SetPoint("TOPLEFT", colorSection, "TOPLEFT", 0, -y)
+        defaultColorPicker:SetPoint("TOPRIGHT", colorSection, "TOPRIGHT", 0, -y)
+        y = y + defaultColorPicker:GetHeight() + SPACING
+        local h = math.max(1, y - SPACING)
+        colorSection:SetHeight(h)
+        scrollChild:SetHeight(colorRowsY + h + PAD)
+        scrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately)
     end
+
+    local function layoutColorRows()
+        local currentID = getSelectedThemeID()
+        local theme = tullaCTC.db.profile.themes[currentID]
+        local entries = Addon:GetSortedTextColors(theme)
+
+        for i, row in ipairs(colorRowPool) do
+            if i <= #entries then
+                local prevThreshold = i > 1 and entries[i - 1].threshold or nil
+                row:Update(entries[i], i, theme, prevThreshold)
+                row:Show()
+            else
+                row:Hide()
+            end
+        end
+
+        local prevThreshold = #entries > 0 and entries[#entries].threshold or nil
+        defaultColorPicker:Refresh(currentID)
+        defaultColorPicker:SetLabel(Addon:FormatDefaultColorRange(prevThreshold))
+
+        layoutColorSection()
+    end
+
+    local function refreshContent()
+        local newID = getSelectedThemeID()
+        themeDD:GenerateMenu()
+        for _, w in ipairs(refreshables) do
+            w:Refresh(newID)
+        end
+        layoutColorRows()
+        scrollBox:ScrollToBegin()
+    end
+
+    activeRefreshContent = refreshContent
+    activeColorRefresh = layoutColorRows
+
+    layoutColorRows()
 end

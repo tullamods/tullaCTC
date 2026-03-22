@@ -1,13 +1,10 @@
 local _, Addon = ...
 local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
-local AceGUI = LibStub('AceGUI-3.0')
 local tullaCTC = _G.tullaCTC
 
-local NEW_THEME_KEY = "__new__"
-
---------------------------------------------------------------------------------
--- Static Popup Dialogs
---------------------------------------------------------------------------------
+local ROW_HEIGHT = 30
+local PAD = Addon.PAD
+local SPACING = Addon.SPACING
 
 StaticPopupDialogs["TULLACTC_NEW_RULE_THEME"] = {
     text = L.EnterThemeName,
@@ -15,17 +12,17 @@ StaticPopupDialogs["TULLACTC_NEW_RULE_THEME"] = {
     button2 = CANCEL,
     hasEditBox = true,
     OnShow = function(self, data)
-        self.editBox:SetText(data.ruleName)
-        self.editBox:HighlightText()
+        self.EditBox:SetText(data.ruleName)
+        self.EditBox:HighlightText()
     end,
     OnAccept = function(self, data)
-        local name = self.editBox:GetText():trim()
+        local name = self.EditBox:GetText():trim()
         if name ~= "" and not Addon:HasTheme("custom_" .. name) then
             local newID = Addon:CreateTheme(name)
             if newID then
                 data.settings.theme = newID
                 tullaCTC:Refresh()
-                Addon:RefreshRulesPanel()
+                Addon:OpenToThemesTab(newID)
             end
         end
     end,
@@ -39,106 +36,108 @@ StaticPopupDialogs["TULLACTC_NEW_RULE_THEME"] = {
     hideOnEscape = true,
 }
 
---------------------------------------------------------------------------------
--- Helpers
---------------------------------------------------------------------------------
-
-local function getThemeValues()
-    local values = {}
+local function buildThemeDropdownMenu(_, rootDescription, settings, ruleName)
     local order = {}
-
-    for id, theme in pairs(tullaCTC.db.profile.themes) do
-        values[id] = theme.displayName or rawget(L, 'Theme_' .. id) or id
+    for id in pairs(tullaCTC.db.profile.themes) do
         order[#order + 1] = id
     end
-
     table.sort(order, function(a, b)
-        return values[a] < values[b]
+        return Addon.GetThemeDisplayName(a) < Addon.GetThemeDisplayName(b)
     end)
 
-    values[NEW_THEME_KEY] = L.NewTheme
-    order[#order + 1] = NEW_THEME_KEY
+    for _, id in ipairs(order) do
+        rootDescription:CreateRadio(Addon.GetThemeDisplayName(id),
+            function() return settings.theme == id end,
+            function()
+                settings.theme = id
+                tullaCTC:Refresh()
+            end)
+    end
 
-    return values, order
+    rootDescription:CreateDivider()
+
+    rootDescription:CreateButton(L.NewTheme, function()
+        StaticPopup_Show("TULLACTC_NEW_RULE_THEME", nil, nil, {
+            ruleName = ruleName,
+            settings = settings,
+        })
+    end)
 end
 
-local function getRuleSettings(ruleId)
-    return tullaCTC.db.profile.rules[ruleId]
-end
+local function buildRuleRow(rowFrame, rule, settings)
+    local ruleName = rawget(L, "Rule_" .. rule.id) or rule.displayName or rule.id
+    local enabled = tullaCTC:IsRuleEnabled(rule)
 
---------------------------------------------------------------------------------
--- Rules Panel
---------------------------------------------------------------------------------
+    if not rowFrame._initialized then
+        rowFrame._initialized = true
+
+        local cb = CreateFrame("CheckButton", nil, rowFrame, "UICheckButtonTemplate")
+        cb:SetSize(ROW_HEIGHT - 4, ROW_HEIGHT - 4)
+        cb:SetPoint("LEFT", rowFrame, "LEFT", 0, 0)
+        cb.Text:SetFontObject(GameFontNormal)
+        rowFrame._cb = cb
+
+        local dd = CreateFrame("DropdownButton", nil, rowFrame, "WowStyle1DropdownTemplate")
+        dd:SetPoint("LEFT", rowFrame, "CENTER", PAD, 0)
+        dd:SetPoint("RIGHT", rowFrame, "RIGHT", 0, 0)
+        dd:SetHeight(ROW_HEIGHT - 4)
+        rowFrame._dd = dd
+    end
+
+    local cb = rowFrame._cb
+    local dd = rowFrame._dd
+
+    cb.Text:SetText(ruleName)
+    cb:SetChecked(enabled)
+    cb:SetScript("OnClick", function(self)
+        settings.enabled = self:GetChecked()
+        dd:SetEnabled(settings.enabled)
+        tullaCTC:Refresh()
+    end)
+
+    dd:SetEnabled(enabled)
+    dd:SetupMenu(function(self, rootDescription)
+        buildThemeDropdownMenu(self, rootDescription, settings, ruleName)
+    end)
+end
 
 function Addon:RefreshRulesPanel()
-    if self._buildRulesPanel then
-        self._buildRulesPanel()
+    if self._populateRules then
+        self._populateRules()
     end
 end
 
 function Addon:BuildRulesPanel(container)
-    container:SetLayout("Flow")
+    local header = Addon:CreatePanelHeader(container, L.Rules)
 
-    -- title
-    local title = AceGUI:Create("Label")
-    title:SetText("|cFFFFD100" .. L.Rules .. "|r  -  " .. L.RulesDesc)
-    title:SetFontObject(GameFontNormalLarge)
-    title:SetFullWidth(true)
-    container:AddChild(title)
+    local scrollBox = CreateFrame("Frame", nil, container, "WowScrollBoxList")
+    local scrollBar = CreateFrame("EventFrame", nil, container, "MinimalScrollBar")
 
-    -- scrollable rules list
-    local scroll = AceGUI:Create("ScrollFrame")
-    scroll:SetLayout("Flow")
-    scroll:SetFullWidth(true)
-    scroll:SetFullHeight(true)
+    scrollBox:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, 0)
+    scrollBox:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -16, 0)
+    scrollBar:SetPoint("TOPLEFT", scrollBox, "TOPRIGHT", 2, -20)
+    scrollBar:SetPoint("BOTTOMLEFT", scrollBox, "BOTTOMRIGHT", 2, 20)
 
-    local themeValues, themeOrder = getThemeValues()
-
-    for _, rule in tullaCTC:IterateRules() do
-        local ruleName = rawget(L, "Rule_" .. rule.id) or rule.displayName or rule.id
-        local settings = getRuleSettings(rule.id)
-        local enabled = tullaCTC:IsRuleEnabled(rule)
-
-        local cb = AceGUI:Create("CheckBox")
-        cb:SetLabel(ruleName)
-        cb:SetRelativeWidth(0.5)
-        cb:SetValue(enabled)
-
-        local dd = AceGUI:Create("Dropdown")
-        dd:SetLabel("")
-        dd:SetRelativeWidth(0.5)
-        dd:SetList(themeValues, themeOrder)
-        dd:SetValue(settings.theme or "default")
-        dd:SetDisabled(not enabled)
-
-        cb:SetCallback("OnValueChanged", function(_, _, val)
-            settings.enabled = val
-            dd:SetDisabled(not val)
-            tullaCTC:Refresh()
+    local view = CreateScrollBoxListLinearView(PAD, PAD, PAD, PAD, SPACING)
+    view:SetElementExtent(ROW_HEIGHT)
+    view:SetElementFactory(function(factory, elementData)
+        factory("Frame", function(rowFrame, elementData)
+            rowFrame:SetHeight(ROW_HEIGHT)
+            buildRuleRow(rowFrame, elementData.rule, elementData.settings)
         end)
+    end)
 
-        dd:SetCallback("OnValueChanged", function(_, _, val)
-            if val == NEW_THEME_KEY then
-                dd:SetValue(settings.theme or "default")
-                StaticPopup_Show("TULLACTC_NEW_RULE_THEME", nil, nil, {
-                    ruleName = ruleName,
-                    settings = settings,
-                })
-            else
-                settings.theme = val
-                tullaCTC:Refresh()
-            end
-        end)
+    ScrollUtil.InitScrollBoxListWithScrollBar(scrollBox, scrollBar, view)
 
-        scroll:AddChild(cb)
-        scroll:AddChild(dd)
+    local function populate()
+        local dp = CreateDataProvider()
+        for _, rule in tullaCTC:IterateRules() do
+            local ruleSettings = tullaCTC.db.profile.rules[rule.id]
+            dp:Insert({ rule = rule, settings = ruleSettings })
+        end
+        scrollBox:SetDataProvider(dp)
     end
 
-    container:AddChild(scroll)
-
-    -- store rebuild function for RefreshRulesPanel
-    self._buildRulesPanel = function()
-        container:ReleaseChildren()
-        self:BuildRulesPanel(container)
-    end
+    populate()
+    self._populateRules = populate
 end

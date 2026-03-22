@@ -1,144 +1,101 @@
 local _, Addon = ...
 local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
-local AceGUI = LibStub('AceGUI-3.0')
 local tullaCTC = _G.tullaCTC
 
-local function getProfileList(excludeCurrent)
+StaticPopupDialogs["TULLACTC_NEW_PROFILE"] = {
+    text = L.EnterNewProfileName,
+    button1 = ACCEPT,
+    button2 = CANCEL,
+    hasEditBox = true,
+    OnAccept = function(self)
+        local name = self.editBox:GetText():trim()
+        if name ~= "" then
+            tullaCTC.db:SetProfile(name)
+        end
+    end,
+    EditBoxOnEnterPressed = function(self)
+        self:GetParent().button1:Click()
+    end,
+    EditBoxOnEscapePressed = function(self)
+        self:GetParent():Hide()
+    end,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
+StaticPopupDialogs["TULLACTC_DUPLICATE_PROFILE"] = {
+    text = L.EnterNewProfileName,
+    button1 = ACCEPT,
+    button2 = CANCEL,
+    hasEditBox = true,
+    OnAccept = function(self, sourceProfile)
+        local name = self.editBox:GetText():trim()
+        if name ~= "" then
+            tullaCTC.db:SetProfile(name)
+            tullaCTC.db:CopyProfile(sourceProfile)
+        end
+    end,
+    EditBoxOnEnterPressed = function(self)
+        self:GetParent().button1:Click()
+    end,
+    EditBoxOnEscapePressed = function(self)
+        self:GetParent():Hide()
+    end,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
+local function generateProfileMenu(_, rootDescription)
     local profiles = {}
-    local current = tullaCTC.db:GetCurrentProfile()
 
     for _, name in pairs(tullaCTC.db:GetProfiles()) do
-        if not (excludeCurrent and name == current) then
-            profiles[name] = name
+        profiles[#profiles + 1] = name
+    end
+    table.sort(profiles)
+
+    local count = #profiles
+
+    for _, name in ipairs(profiles) do
+        local entry = rootDescription:CreateRadio(name,
+            function() return tullaCTC.db:GetCurrentProfile() == name end,
+            function() tullaCTC.db:SetProfile(name) end)
+
+        entry:CreateButton(L.DuplicateProfile, function()
+            StaticPopup_Show("TULLACTC_DUPLICATE_PROFILE", nil, nil, name)
+        end)
+
+        entry:CreateDivider()
+
+        entry:CreateButton(L.ResetProfile, function()
+            tullaCTC.db:SetProfile(name)
+            tullaCTC.db:ResetProfile()
+        end)
+
+        local deleteEntry = entry:CreateButton(L.DeleteProfile, function()
+            tullaCTC.db:DeleteProfile(name)
+        end)
+        if count <= 1 or name == tullaCTC.db:GetCurrentProfile() then
+            deleteEntry:SetEnabled(false)
         end
     end
 
-    return profiles
+    rootDescription:CreateDivider()
+
+    rootDescription:CreateButton(L.NewProfile, function()
+        StaticPopup_Show("TULLACTC_NEW_PROFILE")
+    end)
 end
 
-function Addon:BuildProfilesPanel(container)
-    container:SetLayout("Flow")
+function Addon:BuildProfileDropdown(parent)
+    local dd = CreateFrame("DropdownButton", nil, parent, "WowStyle1DropdownTemplate")
+    dd:SetupMenu(generateProfileMenu)
 
-    local scroll = AceGUI:Create("ScrollFrame")
-    scroll:SetLayout("Flow")
-    scroll:SetFullWidth(true)
-    scroll:SetFullHeight(true)
-
-    -- title
-    local title = AceGUI:Create("Label")
-    title:SetText("|cFFFFD100" .. L.Profiles .. "|r  -  " .. L.ProfilesDesc)
-    title:SetFontObject(GameFontNormalLarge)
-    title:SetFullWidth(true)
-    scroll:AddChild(title)
-
-    -- current profile display
-    local currentGroup = AceGUI:Create("InlineGroup")
-    currentGroup:SetTitle(L.CurrentProfile)
-    currentGroup:SetFullWidth(true)
-    currentGroup:SetLayout("Flow")
-
-    local currentLabel = AceGUI:Create("Label")
-    currentLabel:SetText(tullaCTC.db:GetCurrentProfile())
-    currentLabel:SetFontObject(GameFontHighlightLarge)
-    currentLabel:SetFullWidth(true)
-    scroll:AddChild(currentGroup)
-    currentGroup:AddChild(currentLabel)
-
-    -- switch profile
-    local switchGroup = AceGUI:Create("InlineGroup")
-    switchGroup:SetTitle(L.SwitchProfile)
-    switchGroup:SetFullWidth(true)
-    switchGroup:SetLayout("Flow")
-
-    local switchDropdown = AceGUI:Create("Dropdown")
-    switchDropdown:SetLabel(L.SelectProfile)
-    switchDropdown:SetList(getProfileList())
-    switchDropdown:SetValue(tullaCTC.db:GetCurrentProfile())
-    switchDropdown:SetRelativeWidth(0.6)
-    switchDropdown:SetCallback("OnValueChanged", function(_, _, val)
-        tullaCTC.db:SetProfile(val)
+    tullaCTC.db.RegisterCallback(dd, "OnProfileChanged", function()
+        dd:GenerateMenu()
     end)
-    switchGroup:AddChild(switchDropdown)
-
-    scroll:AddChild(switchGroup)
-
-    -- new profile
-    local newGroup = AceGUI:Create("InlineGroup")
-    newGroup:SetTitle(L.NewProfile)
-    newGroup:SetFullWidth(true)
-    newGroup:SetLayout("Flow")
-
-    local newEditBox = AceGUI:Create("EditBox")
-    newEditBox:SetLabel(L.ProfileName)
-    newEditBox:SetRelativeWidth(0.6)
-    newEditBox:SetCallback("OnEnterPressed", function(widget, _, val)
-        val = strtrim(val)
-        if val ~= "" then
-            tullaCTC.db:SetProfile(val)
-            widget:SetText("")
-        end
-    end)
-    newGroup:AddChild(newEditBox)
-
-    scroll:AddChild(newGroup)
-
-    -- copy from
-    local copyGroup = AceGUI:Create("InlineGroup")
-    copyGroup:SetTitle(L.CopyFrom)
-    copyGroup:SetFullWidth(true)
-    copyGroup:SetLayout("Flow")
-
-    local copyDropdown = AceGUI:Create("Dropdown")
-    copyDropdown:SetLabel(L.SelectProfile)
-    copyDropdown:SetList(getProfileList(true))
-    copyDropdown:SetRelativeWidth(0.6)
-
-    local copyButton = AceGUI:Create("Button")
-    copyButton:SetText(L.CopyProfile)
-    copyButton:SetRelativeWidth(0.35)
-    copyButton:SetCallback("OnClick", function()
-        local val = copyDropdown:GetValue()
-        if val then
-            tullaCTC.db:CopyProfile(val)
-        end
+    tullaCTC.db.RegisterCallback(dd, "OnProfileCopied", function()
+        dd:GenerateMenu()
     end)
 
-    copyGroup:AddChild(copyDropdown)
-    copyGroup:AddChild(copyButton)
-    scroll:AddChild(copyGroup)
-
-    -- danger zone: reset and delete
-    local dangerGroup = AceGUI:Create("InlineGroup")
-    dangerGroup:SetTitle(L.ProfileActions)
-    dangerGroup:SetFullWidth(true)
-    dangerGroup:SetLayout("Flow")
-
-    local resetButton = AceGUI:Create("Button")
-    resetButton:SetText(L.ResetProfile)
-    resetButton:SetRelativeWidth(0.35)
-    resetButton:SetCallback("OnClick", function()
-        tullaCTC.db:ResetProfile()
-    end)
-    dangerGroup:AddChild(resetButton)
-
-    local deleteDropdown = AceGUI:Create("Dropdown")
-    deleteDropdown:SetLabel(L.DeleteProfile)
-    deleteDropdown:SetList(getProfileList(true))
-    deleteDropdown:SetRelativeWidth(0.6)
-
-    local deleteButton = AceGUI:Create("Button")
-    deleteButton:SetText(DELETE)
-    deleteButton:SetRelativeWidth(0.35)
-    deleteButton:SetCallback("OnClick", function()
-        local val = deleteDropdown:GetValue()
-        if val then
-            tullaCTC.db:DeleteProfile(val)
-        end
-    end)
-
-    dangerGroup:AddChild(deleteDropdown)
-    dangerGroup:AddChild(deleteButton)
-    scroll:AddChild(dangerGroup)
-
-    container:AddChild(scroll)
+    return dd
 end

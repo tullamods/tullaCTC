@@ -1,92 +1,33 @@
 -- tullaCTC configuration localization - English
 local L = LibStub('AceLocale-3.0'):NewLocale('tullaCTC', 'enUS', true)
 
-L.Anchor = 'Anchor'
-L.Anchor_BOTTOM = 'Bottom'
-L.Anchor_BOTTOMLEFT = 'Bottom Left'
-L.Anchor_BOTTOMRIGHT = 'Bottom Right'
-L.Anchor_CENTER = 'Center'
-L.Anchor_LEFT = 'Left'
-L.Anchor_RIGHT = 'Right'
-L.Anchor_TOP = 'Top'
-L.Anchor_TOPLEFT = 'Top Left'
-L.Anchor_TOPRIGHT = 'Top Right'
-L.Colors = 'Colors'
-L.ColorsDesc = 'Configure text colors based on remaining cooldown time'
-L.ColorsDescription = 'Set the color and duration threshold for each time range. Text will use the color for durations up to the threshold.'
-L.CooldownText = 'Cooldown Text'
-L.Duration = 'Duration'
-L.FontFace = 'Font Face'
-L.FontOutline = 'Font Outline'
-L.FontSize = 'Font Size'
-L.General = GENERAL
-L.HorizontalOffset = 'Horizontal Offset'
-L.MinDuration = 'Minimum Duration'
-L.MinDurationDesc = 'How long, in seconds, a cooldown must be to display countdown text'
-L.AbbrevThreshold = 'Abbreviation Threshold'
-L.AbbrevThresholdDesc = 'How long, in seconds, before cooldown text switches to abbreviated format (e.g., "1m" instead of "60")'
-L.Outline_NONE = NONE
-L.Outline_OUTLINE = 'Thin'
-L.Outline_OUTLINEMONOCHROME = 'Monochrome'
-L.Outline_THICKOUTLINE = 'Thick'
-L.Preview = PREVIEW
-L.TextColor = 'Text Color'
+-- Section headers
+L.CooldownAppearance = 'Cooldown Appearance'
+L.CountdownText = 'Countdown Text'
+L.CountdownTextColors = 'Countdown Text Colors'
 L.TextFont = 'Text Font'
 L.TextPosition = 'Text Position'
 L.TextShadow = 'Text Shadow'
-L.TextShadowColor = COLOR
-L.Themes = 'Themes'
-L.ThemesDesc = 'Customize the appearance of cooldown text and animations'
-L.CreateTheme = 'Create Theme'
-L.CreateThemeDesc = 'Creates a new theme with the specified name'
-L.DeleteTheme = DELETE
-L.DeleteThemeDesc = 'Deletes the selected theme'
-L.CopyTheme = 'Copy Theme'
-L.CopyThemeDesc = 'Make a copy of the current theme'
-L.ResetTheme = 'Reset'
-L.ResetThemeDesc = 'Resets current theme to default values'
-L.RenameTheme = 'Rename'
-L.RenameThemeDesc = 'Rename the selected theme'
-L.SelectTheme = 'Theme'
-L.ManageThemes = 'Themes'
-L.NewTheme = 'New Theme'
-L.EnterThemeName = 'Enter a name for the new theme:'
-L.EnterCopyName = 'Enter a name for the copy:'
-L.DeleteThemeConfirm = 'Are you sure you want to delete "%s"?'
-L.Threshold = 'Duration (Seconds)'
-L.ThresholdDesc = 'Duration threshold for this color range'
-L.Typography = 'Typography'
-L.TypographyDesc = 'Configure font and text appearance'
-L.VerticalOffset = 'Vertical Offset'
-L.UseAuraDisplayTime = 'Use Aura Duration Display Time'
-L.UseAuraDisplayTimeDesc = 'This setting effectively controls duration rounding. Always will round down. Never will round up'
 
--- Color threshold UI
-L.AddColorThreshold = 'Add Color Threshold'
-L.NewThresholdValue = 'Threshold (seconds)'
-L.NewThresholdValueDesc = "Enter threshold in seconds (e.g., 5, 60, 3600)"
-L.RemoveThreshold = 'Remove'
-L.RemoveThresholdConfirm = 'Remove this color threshold?'
-L.ColorRangeDays = '%d day(s)'
-L.ColorRangeHours = '%d hour(s)'
-L.ColorRangeMinutes = '%d minute(s)'
-L.ColorRangeSeconds = '%d second(s)'
-L.ColorRangeAbove = 'Above %s'
-L.ColorRangeOrLess = '%s or less'
-L.ColorRangeTo = '%s to %s'
-L.ColorRangeAll = 'All durations'
+-- Theme management
+L.Themes = 'Themes'
+L.SelectTheme = 'Theme'
+L.NewTheme = 'New Theme'
+L.CopyTheme = 'Copy'
+L.RenameTheme = 'Rename'
+L.ResetTheme = 'Reset'
+L.DeleteTheme = DELETE
+L.EnterThemeName = 'Enter a name for the new theme:'
+L.DeleteThemeConfirm = 'Are you sure you want to delete "%s"?'
+L.Preview = PREVIEW
 
 -- Theme settings
 L.ThemeEnabled = 'Enable Theme'
 L.ThemeEnabledDesc = 'Apply this theme to matching cooldowns'
-L.ThemeText = 'Style Countdown Text'
-L.ThemeTextDesc = 'Apply text styling to cooldown counts'
-L.ThemeCooldown = 'Style Cooldown Frames'
-L.ThemeCooldownDesc = 'Apply cooldown frame specific styling options'
+L.ThemeCooldownDesc = 'Customize cooldown animation and swipe settings'
+L.ThemeTextDesc = 'Customize countdown text appearance and formatting'
 
 -- Cooldown display options
-L.Cooldown = 'Cooldown'
-L.CooldownDesc = 'Configure cooldown animation settings'
 L.DrawText = 'Show Text'
 L.DrawTextDesc = 'Control countdown text visibility'
 L.DrawSwipe = 'Show Swipe'
@@ -99,20 +40,61 @@ L.Reverse = 'Reverse'
 L.ReverseDesc = 'Reverse the swipe direction'
 L.SwipeColor = 'Swipe Color'
 L.SwipeColorDesc = 'Override the color of the cooldown swipe animation'
-L.ThemeSwipeColor = 'Override Swipe Color'
+L.UseAuraDisplayTime = 'Aura Duration Rounding'
+L.UseAuraDisplayTimeDesc = 'Control how aura durations are rounded. Always rounds down, Never rounds up'
+
+-- Countdown text options
+L.MinDuration = 'Minimum Duration'
+L.MinDurationDesc = 'How long, in seconds, a cooldown must be to display countdown text'
+L.TenthsThreshold = 'Tenths Threshold'
+L.TenthsThresholdDesc = 'Show tenths of seconds when the cooldown remaining is below this value'
+L.AbbrevThreshold = 'MM:SS Threshold'
+L.AbbrevThresholdDesc = 'How long, in seconds, before cooldown text switches to MM:SS format (e.g., "1:30" instead of "90")'
+
+-- Font options
+L.FontFace = 'Font'
+L.FontOutline = 'Font Outline'
+L.FontSize = 'Font Size'
+L.Outline_NONE = NONE
+L.Outline_OUTLINE = 'Thin'
+L.Outline_OUTLINEMONOCHROME = 'Monochrome'
+L.Outline_THICKOUTLINE = 'Thick'
+
+-- Position / shadow
+L.Anchor = 'Anchor'
+L.Anchor_BOTTOM = 'Bottom'
+L.Anchor_BOTTOMLEFT = 'Bottom Left'
+L.Anchor_BOTTOMRIGHT = 'Bottom Right'
+L.Anchor_CENTER = 'Center'
+L.Anchor_LEFT = 'Left'
+L.Anchor_RIGHT = 'Right'
+L.Anchor_TOP = 'Top'
+L.Anchor_TOPLEFT = 'Top Left'
+L.Anchor_TOPRIGHT = 'Top Right'
+L.HorizontalOffset = 'Horizontal Offset'
+L.VerticalOffset = 'Vertical Offset'
+L.TextShadowColor = COLOR
 
 -- Tri-state values
 L.DrawState_default = 'Default'
 L.DrawState_always = 'Always'
 L.DrawState_never = 'Never'
 
+-- Color threshold UI
+L.AddColorThreshold = 'Add Color Threshold'
+L.Duration = 'Duration'
+L.TextColor = 'Text Color'
+L.ColorRangeDays = '%d day(s)'
+L.ColorRangeHours = '%d hour(s)'
+L.ColorRangeMinutes = '%d minute(s)'
+L.ColorRangeSeconds = '%d second(s)'
+L.ColorRangeAbove = 'Above %s'
+L.ColorRangeOrLess = '%s or less'
+L.ColorRangeTo = '%s to %s'
+L.ColorRangeAll = 'All durations'
+
 -- Rules
 L.Rules = 'Rules'
-L.RulesDesc = 'Configure which theme to apply to different UI elements'
-L.RuleEnabled = 'Enabled'
-L.RuleEnabledDesc = 'Enable or disable this rule'
-L.RuleTheme = 'Theme'
-L.RuleThemeDesc = 'Select which theme to apply when this rule matches'
 
 -- Builtin Theme Names
 L.Theme_default = DEFAULT
@@ -144,15 +126,9 @@ L.Rule_blizzard_encounter_timeline = HUD_EDIT_MODE_SYSTEM_ENCOUNTER_TIMELINE
 L.Rule_everything = 'Everything Else'
 
 -- Profiles
-L.Profiles = 'Profiles'
-L.ProfilesDesc = 'Manage settings profiles for different characters or configurations'
-L.CurrentProfile = 'Current Profile'
-L.SwitchProfile = 'Switch Profile'
-L.SelectProfile = 'Profile'
+L.Profile = 'Profile'
 L.NewProfile = 'New Profile'
-L.ProfileName = 'Name'
-L.CopyFrom = 'Copy From'
-L.CopyProfile = 'Copy'
-L.ProfileActions = 'Actions'
+L.DuplicateProfile = 'Copy'
 L.ResetProfile = 'Reset'
 L.DeleteProfile = 'Delete'
+L.EnterNewProfileName = 'Enter a name for the new profile:'

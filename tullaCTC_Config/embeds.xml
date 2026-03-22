@@ -1,4 +1,2 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
-	<Include file="libs\AceGUI-3.0\AceGUI-3.0.xml"/>
-	<Include file="libs\AceGUI-3.0-SharedMediaWidgets\widget.xml"/>
 </Ui>

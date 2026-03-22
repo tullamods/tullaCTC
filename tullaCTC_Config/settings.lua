@@ -1,12 +1,5 @@
--- Settings API for tullaCTC configuration
--- Handles data access and manipulation, separate from UI
-
 local _, Addon = ...
 local tullaCTC = _G.tullaCTC
-
---------------------------------------------------------------------------------
--- Theme Management
---------------------------------------------------------------------------------
 
 function Addon:GetThemes()
     return tullaCTC.db.profile.themes
@@ -43,6 +36,13 @@ function Addon:DeleteTheme(themeID)
     end
 
     tullaCTC.db.profile.themes[themeID] = nil
+
+    for _, settings in pairs(tullaCTC.db.profile.rules) do
+        if settings.theme == themeID then
+            settings.theme = "default"
+        end
+    end
+
     tullaCTC:Refresh()
     return true
 end
@@ -52,7 +52,6 @@ function Addon:ResetTheme(themeID)
         return false
     end
 
-    -- grab values we want to persist after resetting
     local theme = tullaCTC.db.profile.themes[themeID]
     local baseThemeID = theme.base
     local displayName = theme.displayName
@@ -60,20 +59,6 @@ function Addon:ResetTheme(themeID)
     tullaCTC.db.profile.themes[themeID] = nil
     return self:CreateTheme(displayName or themeID, baseThemeID)
 end
-
-function Addon:RenameTheme(themeID, newName)
-    local theme = self:GetTheme(themeID)
-    if not theme then
-        return false
-    end
-
-    theme.displayName = newName
-    return true
-end
-
---------------------------------------------------------------------------------
--- Theme Config API
---------------------------------------------------------------------------------
 
 function Addon:SetThemeProperty(themeID, property, value)
     local theme = tullaCTC.db.profile.themes[themeID]
@@ -134,7 +119,6 @@ function Addon:RemoveTextColorEntry(theme, index)
     return false
 end
 
--- ensure textColors is a profile-specific copy before modifying
 function Addon:SetTextColorValue(theme, index, color)
     local entry = theme.textColors[index]
 
