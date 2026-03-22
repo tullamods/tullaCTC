@@ -115,7 +115,7 @@ Addon:RegisterRule {
 Addon:RegisterRule {
     id = "blizzard_party",
     priority = 410,
-    match = Addon.MatchName("^PartyFrame")
+    match = Addon.MatchName("^PartyFrame", "^CompactPartyFrame")
 }
 
 Addon:RegisterRule {

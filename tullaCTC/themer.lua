@@ -62,7 +62,7 @@ function Addon:CreateThemer(config)
     local font, fontSize, fontFlags
     local point, offsetX, offsetY
     local shadowColor, shadowX, shadowY
-    local abbrevThreshold, minDurationMS, textColors, defaultTextColor
+    local mmssThreshold, tenthsThreshold, minDurationMS, textColors, defaultTextColor
 
     if themeText then
         if config.font then
@@ -79,7 +79,8 @@ function Addon:CreateThemer(config)
         shadowX = config.shadowX
         shadowY = config.shadowY
 
-        abbrevThreshold = config.abbrevThreshold
+        mmssThreshold = config.abbrevThreshold
+        tenthsThreshold = config.tenthsThreshold
         minDurationMS = config.minDuration * 1000
         useAuraDisplayTime = getDrawStateBool(config.useAuraDisplayTime)
 
@@ -147,8 +148,12 @@ function Addon:CreateThemer(config)
                 text:SetShadowOffset(shadowX, shadowY)
             end
 
-            if abbrevThreshold then
-                cooldown:SetCountdownAbbrevThreshold(abbrevThreshold)
+            if tenthsThreshold and cooldown.SetCountdownMillisecondsThreshold then
+                cooldown:SetCountdownMillisecondsThreshold(tenthsThreshold)
+            end
+
+            if mmssThreshold then
+                cooldown:SetCountdownAbbrevThreshold(mmssThreshold)
             end
 
             if minDurationMS then

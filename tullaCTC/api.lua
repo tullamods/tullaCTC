@@ -185,13 +185,3 @@ function Addon.MatchName(...)
         return false
     end
 end
-
-function Addon.GetRegionName(region)
-    while region do
-        local name = region:GetName()
-        if name then
-            return name
-        end
-        region = region:GetParent()
-    end
-end

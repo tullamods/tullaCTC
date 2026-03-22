@@ -101,6 +101,15 @@ function Addon:OnLoad()
     self.db = db
     self:MigrateTextColors()
 
+    -- add a handler for loading the settings panel
+    self.frame = CreateFrame("Frame", nil, SettingsPanel)
+    self.frame.owner = self
+
+    self.frame:SetScript("OnShow", function(frame)
+        C_AddOns.LoadAddOn(AddonName .. "_Config")
+        frame:SetScript("OnShow", nil)
+    end)
+
     -- setup hooks
     local cooldown_mt = getmetatable(ActionButton1Cooldown).__index
 
@@ -279,6 +288,9 @@ function Addon:GetDBDefaults()
 
                     -- how long a cooldown must be in order to display text
                     minDuration = 3,
+
+                    -- tenths duration (0.1s)
+                    tenthsThreshold = 0,
 
                     -- this currently controls the MM:SS display duration
                     abbrevThreshold = 90,
