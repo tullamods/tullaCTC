@@ -9,10 +9,12 @@ embeds.xml
 localization\default.lua
 localization\[TextLocale].lua
 utils.lua
+widgets\row.lua
+widgets\swatch.lua
+widgets\panelHeader.lua
 widgets\checkBox.lua
 widgets\slider.lua
 widgets\dropdown.lua
-widgets\drawStateDropdown.lua
 widgets\colorPicker.lua
 widgets\checkBoxColorPicker.lua
 widgets\fontSelector.lua

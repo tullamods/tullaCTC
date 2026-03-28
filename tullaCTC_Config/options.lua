@@ -2,7 +2,7 @@ local _, Addon = ...
 local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
 local tullaCTC = _G.tullaCTC
 
-local PAD = Addon.PAD
+local PADDING = Addon.PADDING
 local SPACING = Addon.SPACING
 
 local mainFrame
@@ -11,54 +11,33 @@ local themesPanel
 local rulesPanel
 local activeSelectTab
 
-local function buildThemesPanel(panel)
-    if panel._content then panel._content:Hide() end
-    local content = CreateFrame("Frame", nil, panel)
-    content:SetAllPoints()
-    panel._content = content
-    Addon:BuildThemePanel(content)
-end
-
-local function buildRulesPanel(panel)
-    if panel._content then panel._content:Hide() end
-    local content = CreateFrame("Frame", nil, panel)
-    content:SetAllPoints()
-    panel._content = content
-    Addon:BuildRulesPanel(content)
-end
-
 local function buildCanvas(canvas)
-    if canvas._content then canvas._content:Hide() end
-    local content = CreateFrame("Frame", nil, canvas)
-    content:SetAllPoints()
-    canvas._content = content
-
-    local tabBar = CreateFrame("Frame", nil, content)
+    local tabBar = CreateFrame("Frame", nil, canvas)
     tabBar:SetHeight(37)
-    tabBar:SetPoint("TOPLEFT", content, "TOPLEFT", PAD, -PAD)
-    tabBar:SetPoint("TOPRIGHT", content, "TOPRIGHT", -PAD, -PAD)
+    tabBar:SetPoint("TOPLEFT", canvas, "TOPLEFT", PADDING, -PADDING)
+    tabBar:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -PADDING, -PADDING)
 
-    local contentArea = CreateFrame("Frame", nil, content)
+    local contentArea = CreateFrame("Frame", nil, canvas)
     contentArea:SetPoint("TOPLEFT", tabBar, "BOTTOMLEFT", 0, -SPACING)
-    contentArea:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT", 0, 0)
+    contentArea:SetPoint("BOTTOMRIGHT", canvas, "BOTTOMRIGHT", 0, 0)
 
     themesPanel = CreateFrame("Frame", nil, contentArea)
     themesPanel:SetAllPoints()
     rulesPanel = CreateFrame("Frame", nil, contentArea)
     rulesPanel:SetAllPoints()
 
-    buildThemesPanel(themesPanel)
-    buildRulesPanel(rulesPanel)
+    Addon:BuildThemePanel(themesPanel)
+    Addon:BuildRulesPanel(rulesPanel)
 
     local allPanels = { themesPanel, rulesPanel }
     local tabLabels = { L.Themes, L.Rules }
     local tabButtons = {}
 
-    local tabDividerLeft = content:CreateTexture(nil, "ARTWORK")
+    local tabDividerLeft = canvas:CreateTexture(nil, "ARTWORK")
     tabDividerLeft:SetHeight(1)
     tabDividerLeft:SetColorTexture(0.3, 0.3, 0.3, 1)
 
-    local tabDividerRight = content:CreateTexture(nil, "ARTWORK")
+    local tabDividerRight = canvas:CreateTexture(nil, "ARTWORK")
     tabDividerRight:SetHeight(1)
     tabDividerRight:SetColorTexture(0.3, 0.3, 0.3, 1)
 
@@ -99,7 +78,7 @@ local function buildCanvas(canvas)
 
     local profileLabel = tabBar:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     profileLabel:SetText(L.Profile)
-    profileLabel:SetPoint("RIGHT", profileDD, "LEFT", -PAD, 0)
+    profileLabel:SetPoint("RIGHT", profileDD, "LEFT", -PADDING, 0)
 
     activeSelectTab = selectTab
     selectTab(1)
@@ -126,9 +105,9 @@ function Addon:OpenToThemesTab(themeID)
 end
 
 function Addon:OnProfileChanged()
-    if mainFrame then
-        buildCanvas(mainFrame)
-        mainFrame._built = true
+    Addon:SelectAndRefreshTheme("default")
+    if self._refreshRulesPanel then
+        self._refreshRulesPanel()
     end
 end
 

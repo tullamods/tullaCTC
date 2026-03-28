@@ -7,32 +7,13 @@ StaticPopupDialogs["TULLACTC_NEW_PROFILE"] = {
     button1 = ACCEPT,
     button2 = CANCEL,
     hasEditBox = true,
-    OnAccept = function(self)
-        local name = self.editBox:GetText():trim()
-        if name ~= "" then
-            tullaCTC.db:SetProfile(name)
-        end
-    end,
-    EditBoxOnEnterPressed = function(self)
-        self:GetParent().button1:Click()
-    end,
-    EditBoxOnEscapePressed = function(self)
-        self:GetParent():Hide()
-    end,
-    whileDead = true,
-    hideOnEscape = true,
-}
-
-StaticPopupDialogs["TULLACTC_DUPLICATE_PROFILE"] = {
-    text = L.EnterNewProfileName,
-    button1 = ACCEPT,
-    button2 = CANCEL,
-    hasEditBox = true,
     OnAccept = function(self, sourceProfile)
         local name = self.editBox:GetText():trim()
         if name ~= "" then
             tullaCTC.db:SetProfile(name)
-            tullaCTC.db:CopyProfile(sourceProfile)
+            if sourceProfile then
+                tullaCTC.db:CopyProfile(sourceProfile)
+            end
         end
     end,
     EditBoxOnEnterPressed = function(self)
@@ -61,7 +42,7 @@ local function generateProfileMenu(_, rootDescription)
             function() tullaCTC.db:SetProfile(name) end)
 
         entry:CreateButton(L.DuplicateProfile, function()
-            StaticPopup_Show("TULLACTC_DUPLICATE_PROFILE", nil, nil, name)
+            StaticPopup_Show("TULLACTC_NEW_PROFILE", nil, nil, name)
         end)
 
         entry:CreateDivider()

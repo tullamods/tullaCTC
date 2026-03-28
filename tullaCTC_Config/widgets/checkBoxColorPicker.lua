@@ -1,76 +1,62 @@
 local _, Addon = ...
-local tullaCTC = _G.tullaCTC
 
-function Addon:AddCheckBoxColorPicker(parent, themeID, checkProperty, colorProperty, opts)
-    local default  = opts.default or "FFFFFFFF"
-    local hasAlpha = opts.hasAlpha ~= false
+local function checkBoxColorPicker_UpdateSwatch(self)
+    local r, g, b, a = Addon.HexToRGBA(self.data[self.colorProperty] or self.default)
+    self.ColorTexture:SetColorTexture(r, g, b, a)
+end
 
-    local row = self:CreateRow(parent, Addon.ROW_HEIGHT, opts)
+local function checkBoxColorPicker_Refresh(self)
+    self.CheckBox:SetChecked(self.data[self.checkProperty])
+    checkBoxColorPicker_UpdateSwatch(self)
+end
 
-    local cb = CreateFrame("CheckButton", nil, row, "SettingsCheckboxTemplate")
-    cb:SetPoint("LEFT", row, "LEFT", Addon.LABEL_COL_WIDTH + Addon.PAD, 0)
-    cb:Init(tullaCTC.db.profile.themes[themeID][checkProperty])
-    if cb.HoverBackground then cb.HoverBackground:Hide() end
+--- Create a row with a checkbox and a color swatch.
+--- @param options table - inherits CreateRow fields
+--- @field checkProperty string - data key for the boolean value
+--- @field colorProperty string - data key for the hex color string
+--- @field default? string - fallback hex color (default "FFFFFFFF")
+--- @field hasAlpha? boolean - show alpha slider in color picker (default true)
+function Addon:AddCheckBoxColorPicker(options)
+    local checkProperty = options.checkProperty
+    local colorProperty = options.colorProperty
+    local default = options.default or "FFFFFFFF"
 
-    local swatchButton = CreateFrame("Button", nil, row)
-    swatchButton:SetSize(26, 25)
-    swatchButton:SetPoint("LEFT", cb, "RIGHT", Addon.PAD, 0)
+    local row = self:CreateRow(options)
 
-    local bg = swatchButton:CreateTexture(nil, "BACKGROUND")
-    bg:SetAtlas("common-dropdown-c-button", TextureKitConstants.UseAtlasSize)
-    bg:SetPoint("CENTER")
+    local cb = CreateFrame("CheckButton", nil, row, "MinimalCheckboxTemplate")
+    cb:SetPoint("LEFT", row, "LEFT", Addon.LABEL_WIDTH + Addon.PADDING, 0)
+    cb:SetChecked(row.data[checkProperty])
 
-    local colorTex = swatchButton:CreateTexture(nil, "ARTWORK")
-    colorTex:SetPoint("TOPLEFT", 4, -3)
-    colorTex:SetPoint("BOTTOMRIGHT", -4, 3)
+    local swatch, colorTex = self:CreateSwatch(row)
+    swatch:SetPoint("LEFT", cb, "RIGHT", Addon.PADDING, 0)
 
-    local function updateSwatch()
-        local r, g, b, a = Addon.HexToRGBA(tullaCTC.db.profile.themes[themeID][colorProperty] or default)
-        colorTex:SetColorTexture(r, g, b, a)
-    end
+    row.checkProperty = checkProperty
+    row.colorProperty = colorProperty
+    row.default = default
+    row.CheckBox = cb
+    row.ColorTexture = colorTex
 
-    updateSwatch()
+    row.Refresh = checkBoxColorPicker_Refresh
 
-    swatchButton:SetScript("OnClick", function()
-        local r, g, b, a = Addon.HexToRGBA(tullaCTC.db.profile.themes[themeID][colorProperty] or default)
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = r,
-            g = g,
-            b = b,
-            opacity   = hasAlpha and (1 - a) or nil,
-            hasOpacity = hasAlpha,
-            swatchFunc = function()
-                local r2, g2, b2 = ColorPickerFrame:GetColorRGB()
-                local a2 = hasAlpha and (1 - ColorPickerFrame:GetColorAlpha()) or 1
-                colorTex:SetColorTexture(r2, g2, b2, a2)
-                Addon:SetThemeProperty(themeID, colorProperty, Addon.RGBAToHex(r2, g2, b2, a2))
-            end,
-            cancelFunc = function(prev)
-                local pr, pg, pb = prev.r, prev.g, prev.b
-                local pa = hasAlpha and (1 - (prev.opacity or 0)) or 1
-                colorTex:SetColorTexture(pr, pg, pb, pa)
-                Addon:SetThemeProperty(themeID, colorProperty, Addon.RGBAToHex(pr, pg, pb, pa))
+    checkBoxColorPicker_UpdateSwatch(row)
+
+    swatch:SetScript("OnClick", function()
+        Addon:OpenColorPicker({
+            color = row.data[row.colorProperty] or default,
+            hasAlpha = options.hasAlpha,
+            colorTex = colorTex,
+            onChanged = function(hex)
+                row:TriggerEvent("OnValueChanged", row.colorProperty, hex)
             end,
         })
     end)
 
     row:RegisterHighlightChild(cb)
-    row:RegisterHighlightChild(swatchButton)
+    row:RegisterHighlightChild(swatch)
 
-    local updating = false
-    cb:RegisterCallback(SettingsCheckboxMixin.Event.OnValueChanged, function(_, checked)
-        if not updating then
-            Addon:SetThemeProperty(themeID, checkProperty, checked)
-        end
+    cb:SetScript("OnClick", function()
+        row:TriggerEvent("OnValueChanged", row.checkProperty, cb:GetChecked())
     end)
-
-    function row:Refresh(newID)
-        themeID = newID
-        updating = true
-        cb:Init(tullaCTC.db.profile.themes[themeID][checkProperty])
-        updating = false
-        updateSwatch()
-    end
 
     return row
 end

@@ -3,7 +3,7 @@ local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
 local tullaCTC = _G.tullaCTC
 
 local ROW_HEIGHT = 30
-local PAD = Addon.PAD
+local PADDING = Addon.PADDING
 local SPACING = Addon.SPACING
 
 StaticPopupDialogs["TULLACTC_NEW_RULE_THEME"] = {
@@ -37,15 +37,7 @@ StaticPopupDialogs["TULLACTC_NEW_RULE_THEME"] = {
 }
 
 local function buildThemeDropdownMenu(_, rootDescription, settings, ruleName)
-    local order = {}
-    for id in pairs(tullaCTC.db.profile.themes) do
-        order[#order + 1] = id
-    end
-    table.sort(order, function(a, b)
-        return Addon.GetThemeDisplayName(a) < Addon.GetThemeDisplayName(b)
-    end)
-
-    for _, id in ipairs(order) do
+    for _, id in ipairs(Addon:GetSortedThemeIDs()) do
         rootDescription:CreateRadio(Addon.GetThemeDisplayName(id),
             function() return settings.theme == id end,
             function()
@@ -75,10 +67,11 @@ local function buildRuleRow(rowFrame, rule, settings)
         cb:SetSize(ROW_HEIGHT - 4, ROW_HEIGHT - 4)
         cb:SetPoint("LEFT", rowFrame, "LEFT", 0, 0)
         cb.Text:SetFontObject(GameFontNormal)
+        cb.Text:SetPoint("LEFT", cb, "RIGHT", PADDING, 0)
         rowFrame._cb = cb
 
         local dd = CreateFrame("DropdownButton", nil, rowFrame, "WowStyle1DropdownTemplate")
-        dd:SetPoint("LEFT", rowFrame, "CENTER", PAD, 0)
+        dd:SetPoint("LEFT", rowFrame, "CENTER", PADDING, 0)
         dd:SetPoint("RIGHT", rowFrame, "RIGHT", 0, 0)
         dd:SetHeight(ROW_HEIGHT - 4)
         rowFrame._dd = dd
@@ -101,12 +94,6 @@ local function buildRuleRow(rowFrame, rule, settings)
     end)
 end
 
-function Addon:RefreshRulesPanel()
-    if self._populateRules then
-        self._populateRules()
-    end
-end
-
 function Addon:BuildRulesPanel(container)
     local header = Addon:CreatePanelHeader(container, L.Rules)
 
@@ -118,7 +105,7 @@ function Addon:BuildRulesPanel(container)
     scrollBar:SetPoint("TOPLEFT", scrollBox, "TOPRIGHT", 2, -20)
     scrollBar:SetPoint("BOTTOMLEFT", scrollBox, "BOTTOMRIGHT", 2, 20)
 
-    local view = CreateScrollBoxListLinearView(PAD, PAD, PAD, PAD, SPACING)
+    local view = CreateScrollBoxListLinearView(PADDING, PADDING, PADDING, PADDING, SPACING)
     view:SetElementExtent(ROW_HEIGHT)
     view:SetElementFactory(function(factory, elementData)
         factory("Frame", function(rowFrame, elementData)
@@ -139,5 +126,9 @@ function Addon:BuildRulesPanel(container)
     end
 
     populate()
-    self._populateRules = populate
+    self._refreshRulesPanel = populate
+
+    Addon:RegisterCallback("OnThemeListChanged", function()
+        populate()
+    end, container)
 end
