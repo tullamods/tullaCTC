@@ -181,7 +181,13 @@ function Addon:OnLoad()
     end)
 
     local function enforceCooldownSetting(method, setting)
+        local enforcing = false
+
         hooksecurefunc(cooldown_mt, method, function(cooldown, value)
+            if enforcing then return end
+
+            enforcing = true
+
             local theme = getActiveTheme(cooldown)
             if not (theme and theme.themeText) then return end
 
@@ -194,6 +200,8 @@ function Addon:OnLoad()
                     cooldown[method](cooldown, false)
                 end
             end
+
+            enforcing = false
         end)
     end
 
@@ -203,15 +211,25 @@ function Addon:OnLoad()
     enforceCooldownSetting('SetReverse', 'reverse')
     enforceCooldownSetting('SetUseAuraDisplayTime', 'useAuraDisplayTime')
 
-    hooksecurefunc(cooldown_mt, 'SetSwipeColor', function(cooldown, r, g, b, a)
-        local theme = getActiveTheme(cooldown)
-        if not (theme and theme.themeCooldown and theme.themeSwipeColor) then return end
+    do
+        local enforcing = false
+        hooksecurefunc(cooldown_mt, 'SetSwipeColor', function(cooldown, r, g, b, a)
+            if enforcing then return end
+            enforcing = true
 
-        local cR, cG, cB, cA = Addon.HexToRGBA(theme.swipeColor)
-        if issecretvalue(r) or not (r == cR and g == cG and b == cB and a == cA) then
-            cooldown:SetSwipeColor(cR, cG, cB, cA)
-        end
-    end)
+            local theme = getActiveTheme(cooldown)
+            if not (theme and theme.themeCooldown and theme.themeSwipeColor) then
+                return
+            end
+
+            local cR, cG, cB, cA = Addon.HexToRGBA(theme.swipeColor)
+            if issecretvalue(r) or not (r == cR and g == cG and b == cB and a == cA) then
+                cooldown:SetSwipeColor(cR, cG, cB, cA)
+            end
+
+            enforcing = false
+        end)
+    end
 
     -- setup launcher commands
     local function showOptionsFrame()
@@ -351,30 +369,6 @@ function Addon:MigrateTextColors()
                     tremove(theme.textColors, i)
                 end
             end
-        end
-    end
-end
-
-function Addon:OnUpdate()
-    for cooldown in pairs(active) do
-        local info = cooldowns[cooldown]
-        local themeName = Addon:GetThemeName(cooldown)
-
-        if info.themeName ~= themeName then
-            info.themeName = themeName
-            themers[themeName]:Apply(info)
-        else
-            local duration = info.duration
-            if duration then
-                themers[themeName]:ApplyColor(info)
-            end
-        end
-    end
-
-    -- purge expired durations from cache
-    for key, duration in pairs(durations) do
-        if duration:IsZero() then
-            durations[key] = nil
         end
     end
 end
