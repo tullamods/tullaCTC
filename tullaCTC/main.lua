@@ -77,6 +77,7 @@ local function onCooldownStart(cooldown, duration)
         hooked[cooldown] = true
     end
 
+    -- HACK: fix action button hotkey text appearing above cooldown text
     local parent = cooldown:GetParent()
     if parent and parent.TextOverlayContainer and not InCombatLockdown() then
         cooldown:SetUsingParentLevel(false)
