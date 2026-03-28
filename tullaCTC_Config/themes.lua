@@ -6,18 +6,23 @@ local PADDING = Addon.PADDING
 local SPACING = Addon.SPACING
 local DROPDOWN_HEIGHT = Addon.DROPDOWN_HEIGHT
 
-local function parseThreshold(val)
-    local num = tonumber(strtrim(val))
-    if num and num > 0 then return num end
-    return nil
-end
+local DRAW_ORDER = {
+    "default",
+    "always",
+    "never",
+}
 
-local DRAW_ORDER = { "default", "always", "never" }
 local DRAW_VALUES = {
     default = L.DrawState_default,
     always  = L.DrawState_always,
     never   = L.DrawState_never,
 }
+
+local function parseThreshold(val)
+    local num = tonumber(strtrim(val))
+    if num and num > 0 then return num end
+    return nil
+end
 
 StaticPopupDialogs["TULLACTC_NEW_THEME"] = {
     text = L.EnterThemeName,
@@ -108,7 +113,8 @@ local function generateThemeMenu(_, rootDescription)
 
         local themeEntry = rootDescription:CreateRadio(name,
             function() return getSelectedThemeID() == id end,
-            function() Addon:SelectAndRefreshTheme(id) end)
+            function() Addon:SelectAndRefreshTheme(id) end
+        )
 
         themeEntry:CreateButton(L.CopyTheme, function()
             StaticPopup_Show("TULLACTC_NEW_THEME", nil, nil, id)
@@ -171,6 +177,7 @@ StaticPopupDialogs["TULLACTC_ADD_COLOR"] = {
 local function makeSectionHeader(parent, text, isSubSection)
     local h = CreateFrame("Frame", nil, parent, "SettingsListSectionHeaderTemplate")
     h.Title:ClearAllPoints()
+
     if isSubSection then
         h:SetHeight(35)
         h.Title:SetFontObject(GameFontHighlight)
@@ -179,6 +186,7 @@ local function makeSectionHeader(parent, text, isSubSection)
         h:SetHeight(45)
         h.Title:SetPoint("TOPLEFT", h, "TOPLEFT", 0, -10)
     end
+
     h.Title:SetText(text)
     return h
 end
@@ -210,30 +218,115 @@ local function buildThemeContent(scrollChild, theme)
 
     add("AddCheckBox", {
         property = 'enabled',
-        name = L.ThemeEnabled, desc = L.ThemeEnabledDesc,
+        name = L.ThemeEnabled,
+        desc = L.ThemeEnabledDesc,
     })
 
-    add("AddSectionCheckBox", { property = 'themeCooldown', name = L.CooldownAppearance, desc = L.ThemeCooldownDesc })
-    add("AddDropdown", { property = 'drawSwipe', name = L.DrawSwipe, desc = L.DrawSwipeDesc, values = DRAW_VALUES, order = DRAW_ORDER })
-    add("AddDropdown", { property = 'drawEdge', name = L.DrawEdge, desc = L.DrawEdgeDesc, values = DRAW_VALUES, order = DRAW_ORDER })
-    add("AddDropdown", { property = 'drawBling', name = L.DrawBling, desc = L.DrawBlingDesc, values = DRAW_VALUES, order = DRAW_ORDER })
-    add("AddDropdown", { property = 'reverse', name = L.Reverse, desc = L.ReverseDesc, values = DRAW_VALUES, order = DRAW_ORDER })
+    add("AddSectionCheckBox", {
+        property = 'themeCooldown',
+        name = L.CooldownAppearance,
+        desc = L.ThemeCooldownDesc,
+    })
+
+    add("AddDropdown", {
+        property = 'drawSwipe',
+        name = L.DrawSwipe,
+        desc = L.DrawSwipeDesc,
+        values = DRAW_VALUES,
+        order = DRAW_ORDER,
+    })
+
+    add("AddDropdown", {
+        property = 'drawEdge',
+        name = L.DrawEdge,
+        desc = L.DrawEdgeDesc,
+        values = DRAW_VALUES,
+        order = DRAW_ORDER,
+    })
+
+    add("AddDropdown", {
+        property = 'drawBling',
+        name = L.DrawBling,
+        desc = L.DrawBlingDesc,
+        values = DRAW_VALUES,
+        order = DRAW_ORDER,
+    })
+
+    add("AddDropdown", {
+        property = 'reverse',
+        name = L.Reverse,
+        desc = L.ReverseDesc,
+        values = DRAW_VALUES,
+        order = DRAW_ORDER,
+    })
+
     add("AddCheckBoxColorPicker", {
-        checkProperty = 'themeSwipeColor', colorProperty = 'swipeColor',
-        name = L.SwipeColor, desc = L.SwipeColorDesc, default = "00000000",
+        checkProperty = 'themeSwipeColor',
+        colorProperty = 'swipeColor',
+        name = L.SwipeColor,
+        desc = L.SwipeColorDesc,
+        default = "00000000",
     })
 
-    add("AddSectionCheckBox", { property = 'themeText', name = L.CountdownText, desc = L.ThemeTextDesc })
-    add("AddDropdown", { property = 'drawText', name = L.DrawText, desc = L.DrawTextDesc, values = DRAW_VALUES, order = DRAW_ORDER })
-    add("AddDropdown", { property = 'useAuraDisplayTime', name = L.UseAuraDisplayTime, desc = L.UseAuraDisplayTimeDesc, values = DRAW_VALUES, order = DRAW_ORDER })
-    add("AddSlider", { property = 'minDuration', name = L.MinDuration, desc = L.MinDurationDesc, min = 0, max = 60, default = 3 })
-    add("AddSlider", { property = 'tenthsThreshold', name = L.TenthsThreshold, desc = L.TenthsThresholdDesc, min = 0, max = 10, default = 0 })
-    add("AddSlider", { property = 'abbrevThreshold', name = L.AbbrevThreshold, desc = L.AbbrevThresholdDesc, min = 0, max = 600, default = 90 })
+    add("AddSectionCheckBox", {
+        property = 'themeText',
+        name = L.CountdownText,
+        desc = L.ThemeTextDesc,
+    })
+
+    add("AddDropdown", {
+        property = 'drawText',
+        name = L.DrawText,
+        desc = L.DrawTextDesc,
+        values = DRAW_VALUES,
+        order = DRAW_ORDER,
+    })
+
+    add("AddDropdown", {
+        property = 'useAuraDisplayTime',
+        name = L.UseAuraDisplayTime,
+        desc = L.UseAuraDisplayTimeDesc,
+        values =
+            DRAW_VALUES,
+        order = DRAW_ORDER
+    })
+
+    add("AddSlider", {
+        property = 'minDuration',
+        name = L.MinDuration,
+        desc = L.MinDurationDesc,
+        min = 0,
+        max = 60,
+        default = 3,
+    })
+
+    if 120005 <= (select(4, GetBuildInfo())) then
+        add("AddSlider", {
+            property = 'tenthsThreshold',
+            name = L.TenthsThreshold,
+            desc = L.TenthsThresholdDesc,
+            min = 0,
+            max = 60,
+            default = 0,
+        })
+    end
+
+    add("AddSlider", {
+        property = 'abbrevThreshold',
+        name = L.AbbrevThreshold,
+        desc = L.AbbrevThresholdDesc,
+        min = 0,
+        max = 600,
+        default = 90,
+    })
 
     addChild(makeSectionHeader(scrollChild, L.TextFont, true))
+
     add("AddFontSelector", { property = 'font', name = L.FontFace })
+
     add("AddDropdown", {
-        property = 'fontFlags', name = L.FontOutline,
+        property = 'fontFlags',
+        name = L.FontOutline,
         values = {
             ['']                    = L.Outline_NONE,
             ['OUTLINE']             = L.Outline_OUTLINE,
@@ -242,25 +335,70 @@ local function buildThemeContent(scrollChild, theme)
         },
         order = { '', 'OUTLINE', 'THICKOUTLINE', 'OUTLINE, MONOCHROME' },
     })
-    add("AddSlider", { property = 'fontSize', name = L.FontSize, min = 0, max = 36 })
+
+    add("AddSlider", {
+        property = 'fontSize',
+        name = L.FontSize,
+        min = 0,
+        max = 96,
+    })
 
     addChild(makeSectionHeader(scrollChild, L.TextShadow, true))
-    add("AddColorPicker", { property = 'shadowColor', name = L.TextShadowColor, default = "00000000" })
-    add("AddSlider", { property = 'shadowX', name = L.HorizontalOffset, min = -4, max = 4 })
-    add("AddSlider", { property = 'shadowY', name = L.VerticalOffset, min = -4, max = 4, invert = true })
+
+    add("AddColorPicker", {
+        property = 'shadowColor',
+        name = L.TextShadowColor,
+        default = "00000000",
+    })
+
+    add("AddSlider", {
+        property = 'shadowX',
+        name = L.HorizontalOffset,
+        min = -4,
+        max = 4,
+    })
+
+    add("AddSlider", {
+        property = 'shadowY',
+        name = L.VerticalOffset,
+        min = -4,
+        max = 4,
+        invert = true,
+    })
 
     addChild(makeSectionHeader(scrollChild, L.TextPosition, true))
+
     add("AddDropdown", {
-        property = 'point', name = L.Anchor,
+        property = 'point',
+        name = L.Anchor,
         values = {
-            TOPLEFT = L.Anchor_TOPLEFT, TOP = L.Anchor_TOP, TOPRIGHT = L.Anchor_TOPRIGHT,
-            LEFT    = L.Anchor_LEFT,    CENTER = L.Anchor_CENTER,  RIGHT = L.Anchor_RIGHT,
-            BOTTOMLEFT = L.Anchor_BOTTOMLEFT, BOTTOM = L.Anchor_BOTTOM, BOTTOMRIGHT = L.Anchor_BOTTOMRIGHT,
+            TOPLEFT = L.Anchor_TOPLEFT,
+            TOP = L.Anchor_TOP,
+            TOPRIGHT = L.Anchor_TOPRIGHT,
+            LEFT = L.Anchor_LEFT,
+            CENTER = L.Anchor_CENTER,
+            RIGHT = L.Anchor_RIGHT,
+            BOTTOMLEFT = L.Anchor_BOTTOMLEFT,
+            BOTTOM = L.Anchor_BOTTOM,
+            BOTTOMRIGHT = L.Anchor_BOTTOMRIGHT,
         },
-        order = { 'TOPLEFT','TOP','TOPRIGHT','LEFT','CENTER','RIGHT','BOTTOMLEFT','BOTTOM','BOTTOMRIGHT' },
+        order = { 'TOPLEFT', 'TOP', 'TOPRIGHT', 'LEFT', 'CENTER', 'RIGHT', 'BOTTOMLEFT', 'BOTTOM', 'BOTTOMRIGHT' },
     })
-    add("AddSlider", { property = 'offsetX', name = L.HorizontalOffset, min = -18, max = 18 })
-    add("AddSlider", { property = 'offsetY', name = L.VerticalOffset, min = -18, max = 18, invert = true })
+
+    add("AddSlider", {
+        property = 'offsetX',
+        name = L.HorizontalOffset,
+        min = -18,
+        max = 18,
+    })
+
+    add("AddSlider", {
+        property = 'offsetY',
+        name = L.VerticalOffset,
+        min = -18,
+        max = 18,
+        invert = true,
+    })
 
     local colorsHeader = makeSectionHeader(scrollChild, L.CountdownTextColors)
     local addBtn = CreateFrame("Button", nil, colorsHeader, "UIPanelButtonTemplate")
@@ -346,9 +484,12 @@ function Addon:BuildThemePanel(container)
     end
 
     local defaultColorPicker = Addon:AddColorPicker({
-        parent = colorSection, data = initialTheme, property = 'defaultTextColor',
+        parent = colorSection,
+        data = initialTheme,
+        property = 'defaultTextColor',
         name = "",
     })
+
     defaultColorPicker:RegisterCallback("OnValueChanged", onThemePropertyChanged, Addon)
     defaultColorPicker.layoutIndex = #colorRowPool + 1
     defaultColorPicker.expand = true

@@ -67,7 +67,7 @@ local function buildRuleRow(rowFrame, rule, settings)
         cb:SetSize(ROW_HEIGHT - 4, ROW_HEIGHT - 4)
         cb:SetPoint("LEFT", rowFrame, "LEFT", 0, 0)
         cb.Text:SetFontObject(GameFontNormal)
-        cb.Text:SetPoint("LEFT", cb, "RIGHT", PADDING, 0)
+        cb.Text:SetPoint("LEFT", cb, "RIGHT", PADDING / 2, 0)
         rowFrame._cb = cb
 
         local dd = CreateFrame("DropdownButton", nil, rowFrame, "WowStyle1DropdownTemplate")

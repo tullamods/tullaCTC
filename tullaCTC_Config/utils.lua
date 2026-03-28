@@ -2,7 +2,6 @@ local _, Addon = ...
 local L = LibStub('AceLocale-3.0'):GetLocale('tullaCTC', true)
 local tullaCTC = _G.tullaCTC
 
--- sizing constants (in pixels)
 Addon.DROPDOWN_HEIGHT = 25 -- height of dropdown/stepper controls
 Addon.LABEL_WIDTH = 200    -- fixed width of the label column in widget rows
 Addon.PADDING = 8          -- outer padding around panels and between label/control
