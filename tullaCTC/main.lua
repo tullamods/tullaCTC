@@ -77,6 +77,12 @@ local function onCooldownStart(cooldown, duration)
         hooked[cooldown] = true
     end
 
+    local parent = cooldown:GetParent()
+    if parent and parent.TextOverlayContainer and not InCombatLockdown() then
+        cooldown:SetUsingParentLevel(false)
+        cooldown:SetFrameLevel(777)
+    end
+
     local info = cooldowns[cooldown]
 
     info.themeName = Addon:GetThemeName(cooldown)
