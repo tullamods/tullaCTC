@@ -25,7 +25,7 @@ StaticPopupDialogs["TULLACTC_NEW_THEME"] = {
     button2 = CANCEL,
     hasEditBox = true,
     OnAccept = function(self, baseThemeID)
-        local name = self.editBox:GetText():trim()
+        local name = self.EditBox:GetText():trim()
         if name ~= "" and not Addon:HasTheme("custom_" .. name) then
             local newID = Addon:CreateTheme(name, baseThemeID)
             if newID then
@@ -34,7 +34,7 @@ StaticPopupDialogs["TULLACTC_NEW_THEME"] = {
         end
     end,
     EditBoxOnEnterPressed = function(self)
-        self:GetParent().button1:Click()
+        StaticPopup_OnClick(self:GetParent(), 1)
     end,
     EditBoxOnEscapePressed = function(self)
         self:GetParent():Hide()
@@ -62,18 +62,18 @@ StaticPopupDialogs["TULLACTC_RENAME_THEME"] = {
     button2 = CANCEL,
     hasEditBox = true,
     OnShow = function(self, themeID)
-        self.editBox:SetText(Addon.GetThemeDisplayName(themeID) or "")
-        self.editBox:HighlightText()
+        self.EditBox:SetText(Addon.GetThemeDisplayName(themeID) or "")
+        self.EditBox:HighlightText()
     end,
     OnAccept = function(self, themeID)
-        local name = self.editBox:GetText():trim()
+        local name = self.EditBox:GetText():trim()
         if name ~= "" then
             Addon:SetThemeProperty(themeID, 'displayName', name)
             Addon:TriggerEvent("OnThemeListChanged")
         end
     end,
     EditBoxOnEnterPressed = function(self)
-        self:GetParent().button1:Click()
+        StaticPopup_OnClick(self:GetParent(), 1)
     end,
     EditBoxOnEscapePressed = function(self)
         self:GetParent():Hide()
@@ -143,103 +143,30 @@ local function generateThemeMenu(_, rootDescription)
     end)
 end
 
-local addColorDialog = nil
-
-local function showAddColorDialog(themeID)
-    if not addColorDialog then
-        local dlg = CreateFrame("Frame", "TullaCTCAddColorDialog", UIParent, "BasicFrameTemplateWithInset")
-        dlg:SetSize(280, 152)
-        dlg:SetPoint("CENTER")
-        dlg:SetClampedToScreen(true)
-        dlg:SetFrameStrata("DIALOG")
-        dlg:SetMovable(true)
-        dlg:RegisterForDrag("LeftButton")
-        dlg:SetScript("OnDragStart", dlg.StartMoving)
-        dlg:SetScript("OnDragStop", dlg.StopMovingOrSizing)
-        dlg.TitleText:SetText(L.AddColorThreshold)
-        dlg.CloseButton:SetScript("OnClick", function() dlg:Hide() end)
-        tinsert(UISpecialFrames, "TullaCTCAddColorDialog")
-
-        local LABEL_W = 70
-        local MARGIN = PADDING + 4
-        local CONTROL_X = MARGIN + LABEL_W + PADDING
-        local ROW_H = 24
-        local ROW_Y1 = 40
-        local ROW_Y2 = ROW_Y1 + ROW_H + SPACING
-
-        local durationLabel = dlg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        durationLabel:SetSize(LABEL_W, ROW_H)
-        durationLabel:SetPoint("TOPLEFT", dlg, "TOPLEFT", MARGIN, -ROW_Y1)
-        durationLabel:SetJustifyH("RIGHT")
-        durationLabel:SetJustifyV("MIDDLE")
-        durationLabel:SetText(L.Duration)
-
-        local durationBox = CreateFrame("EditBox", nil, dlg, "InputBoxTemplate")
-        durationBox:SetHeight(20)
-        durationBox:SetAutoFocus(false)
-        durationBox:SetNumeric(true)
-        durationBox:SetPoint("TOPLEFT", dlg, "TOPLEFT", CONTROL_X, -(ROW_Y1 + 2))
-        durationBox:SetPoint("TOPRIGHT", dlg, "TOPRIGHT", -MARGIN, -(ROW_Y1 + 2))
-        dlg.durationBox = durationBox
-
-        local colorLabel = dlg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        colorLabel:SetSize(LABEL_W, ROW_H)
-        colorLabel:SetPoint("TOPLEFT", dlg, "TOPLEFT", MARGIN, -ROW_Y2)
-        colorLabel:SetJustifyH("RIGHT")
-        colorLabel:SetJustifyV("MIDDLE")
-        colorLabel:SetText(L.TextColor)
-
-        local swatchBtn, swTex = Addon:CreateSwatch(dlg)
-        swatchBtn:SetPoint("TOPLEFT", dlg, "TOPLEFT", CONTROL_X, -ROW_Y2)
-
-        local function updateSwatch()
-            local r, g, b, a = Addon.HexToRGBA(dlg.pendingColor)
-            swTex:SetColorTexture(r, g, b, a)
+StaticPopupDialogs["TULLACTC_ADD_COLOR"] = {
+    text = L.AddColorThreshold,
+    button1 = ACCEPT,
+    button2 = CANCEL,
+    hasEditBox = true,
+    OnAccept = function(self, themeID)
+        local threshold = parseThreshold(self.EditBox:GetText())
+        if threshold then
+            Addon:AddTextColorEntry(themeID, threshold, "FFFFFFFF")
         end
-        dlg.updateSwatch = updateSwatch
-
-        swatchBtn:SetScript("OnClick", function()
-            Addon:OpenColorPicker({
-                color = dlg.pendingColor,
-                colorTex = swTex,
-                onChanged = function(hex)
-                    dlg.pendingColor = hex
-                end,
-            })
-        end)
-
-        local acceptBtn = CreateFrame("Button", nil, dlg, "UIPanelButtonTemplate")
-        acceptBtn:SetSize(80, 22)
-        acceptBtn:SetPoint("BOTTOMRIGHT", dlg, "BOTTOM", -PADDING / 2, PADDING + 4)
-        acceptBtn:SetText(ACCEPT)
-
-        local function tryAccept()
-            local threshold = parseThreshold(dlg.durationBox:GetNumber())
-            if threshold and Addon:AddTextColorEntry(dlg.currentThemeID, threshold, dlg.pendingColor) then
-                dlg:Hide()
-            end
-        end
-
-        acceptBtn:SetScript("OnClick", tryAccept)
-        durationBox:SetScript("OnEnterPressed", tryAccept)
-        durationBox:SetScript("OnEscapePressed", function() dlg:Hide() end)
-
-        local cancelBtn = CreateFrame("Button", nil, dlg, "UIPanelButtonTemplate")
-        cancelBtn:SetSize(80, 22)
-        cancelBtn:SetPoint("BOTTOMLEFT", dlg, "BOTTOM", PADDING / 2, PADDING + 4)
-        cancelBtn:SetText(CANCEL)
-        cancelBtn:SetScript("OnClick", function() dlg:Hide() end)
-
-        addColorDialog = dlg
-    end
-
-    addColorDialog.currentThemeID = themeID
-    addColorDialog.pendingColor = "FFFFFFFF"
-    addColorDialog.updateSwatch()
-    addColorDialog.durationBox:SetText("")
-    addColorDialog:Show()
-    addColorDialog.durationBox:SetFocus()
-end
+    end,
+    OnShow = function(self)
+        self.EditBox:SetNumeric(true)
+        self.EditBox:SetText("")
+    end,
+    EditBoxOnEnterPressed = function(self)
+        StaticPopup_OnClick(self:GetParent(), 1)
+    end,
+    EditBoxOnEscapePressed = function(self)
+        self:GetParent():Hide()
+    end,
+    whileDead = true,
+    hideOnEscape = true,
+}
 
 local function makeSectionHeader(parent, text, isSubSection)
     local h = CreateFrame("Frame", nil, parent, "SettingsListSectionHeaderTemplate")
@@ -341,7 +268,7 @@ local function buildThemeContent(scrollChild, theme)
     addBtn:SetPoint("RIGHT", colorsHeader, "RIGHT", 0, 0)
     addBtn:SetText(ADD)
     addBtn:SetScript("OnClick", function()
-        showAddColorDialog(getSelectedThemeID())
+        StaticPopup_Show("TULLACTC_ADD_COLOR", nil, nil, getSelectedThemeID())
     end)
     addChild(colorsHeader)
 

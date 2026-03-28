@@ -8,7 +8,7 @@ StaticPopupDialogs["TULLACTC_NEW_PROFILE"] = {
     button2 = CANCEL,
     hasEditBox = true,
     OnAccept = function(self, sourceProfile)
-        local name = self.editBox:GetText():trim()
+        local name = self.EditBox:GetText():trim()
         if name ~= "" then
             tullaCTC.db:SetProfile(name)
             if sourceProfile then
@@ -17,7 +17,7 @@ StaticPopupDialogs["TULLACTC_NEW_PROFILE"] = {
         end
     end,
     EditBoxOnEnterPressed = function(self)
-        self:GetParent().button1:Click()
+        StaticPopup_OnClick(self:GetParent(), 1)
     end,
     EditBoxOnEscapePressed = function(self)
         self:GetParent():Hide()

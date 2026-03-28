@@ -27,7 +27,7 @@ StaticPopupDialogs["TULLACTC_NEW_RULE_THEME"] = {
         end
     end,
     EditBoxOnEnterPressed = function(self)
-        self:GetParent().button1:Click()
+        StaticPopup_OnClick(self:GetParent(), 1)
     end,
     EditBoxOnEscapePressed = function(self)
         self:GetParent():Hide()
