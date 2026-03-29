@@ -1,5 +1,10 @@
 # tullaCTC Version History
 
+## v12.0.1
+
+* Adjusted the action button cooldown text workaround so that cooldown text appears above the rest
+  of an action button's text, but the cooldown spiral remains below.
+
 ## v12.0.0
 
 * Calling this a release

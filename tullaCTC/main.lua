@@ -77,11 +77,20 @@ local function onCooldownStart(cooldown, duration)
         hooked[cooldown] = true
     end
 
-    -- HACK: fix action button hotkey text appearing above cooldown text
+    -- HACK: cooldown text appears below action button hotkey and count text
+    -- fix this by reparenting the text to a container with a higher frame
+    -- level than the base text overlay container
     local parent = cooldown:GetParent()
     if parent and parent.TextOverlayContainer and not InCombatLockdown() then
-        cooldown:SetUsingParentLevel(false)
-        cooldown:SetFrameLevel(777)
+        if not cooldown.tullaCTC then
+            local container = CreateFrame('Frame', nil, cooldown)
+
+            container:SetAllPoints(cooldown)
+            container:SetFrameLevel(777)
+            cooldown:GetCountdownFontString():SetParent(container)
+
+            cooldown.tullaCTC = container
+        end
     end
 
     local info = cooldowns[cooldown]
