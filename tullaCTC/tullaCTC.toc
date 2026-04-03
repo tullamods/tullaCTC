@@ -1,4 +1,4 @@
-## Interface: 120005, 120001
+## Interface: 120005
 ## Title: tullaCTC
 ## Notes: Cooldown Text Customizer
 ## Author: Tuller
@@ -9,7 +9,6 @@
 embeds.xml
 api.lua
 utils.lua
-durations.lua
 rules.lua
 themer.lua
 main.lua
