@@ -39,10 +39,15 @@ function Addon:RegisterRule(rule)
         end
     end
 
+    local match = rule.match
+    if type(match) == "table" then
+        match = Addon.MatchName(match)
+    end
+
     tinsert(rules, index, {
         id = rule.id,
         priority = rule.priority,
-        match = rule.match,
+        match = match,
         displayName = rule.displayName,
         enabled = rule.enabled
     })
@@ -90,10 +95,15 @@ end
 
 --- Creates a match function that checks if a cooldown's frame name matches any of the given patterns.
 --- Walks up the parent hierarchy to find a named frame.
---- @param ... string Lua patterns to match against the frame name
+--- @param ... string|table Lua patterns to match against the frame name
 --- @return fun(frame: Region): boolean matcher Function that returns true if the frame name matches any pattern
 function Addon.MatchName(...)
-    local patterns = { ... }
+    local patterns
+    if type(...) == "table" then
+        patterns = ...
+    else
+        patterns = { ... }
+    end
 
     return function(region)
         local name
