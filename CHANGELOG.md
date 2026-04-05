@@ -1,8 +1,13 @@
 # tullaCTC Version History
 
-## v12.0.5-beta1
+## Important: v12.0.5 only works on the 12.0.5 PTR
 
-### Important: This version only works on the 12.0.5 PTR
+## v12.0.5-beta2
+
+* Removed the durations API, as it is no longer needed.
+* Applied smooth scaling to cooldown font strings
+
+## v12.0.5-beta1
 
 * tullaCTC now uses the new Cooldown:SetCountdownFormatter API to style cooldowns. Eliminated the need for periodic update handlers.
 * Cooldown text is now automatically scaled based upon frame width (will make optional later)
