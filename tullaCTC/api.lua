@@ -1,7 +1,6 @@
 local _, Addon = ...
 
 local rules = {}
-local durationProviders = {}
 
 --------------------------------------------------------------------------------
 -- Rules API
@@ -83,73 +82,6 @@ end
 --- Iterates over enabled rules in priority order.
 function Addon:IterateActiveRules()
     return activeRulesIterator, nil, 0
-end
-
---------------------------------------------------------------------------------
--- Duration Provider API
---
--- A centralized way to retrieve duration objects from cooldowns
--- We need this in WoW 12.0.X+ because the various Cooldown:SetCooldown methods
--- may contain secret args.
---------------------------------------------------------------------------------
-
---- @class DurationProvider
---- @field id string Unique identifier for the provider
---- @field priority number Priority order (lower values are checked first)
---- @field handle fun(cooldown: Cooldown): (success: boolean, duration: DurationObject | nil)
---- @field displayName? string Optional display name for the provider
-
---- Registers a duration provider for cooldown timing.
---- Providers are evaluated in priority order (lower = first), first match wins.
---- @param provider DurationProvider Provider definition table
-function Addon:RegisterDurationProvider(provider)
-    assert(type(provider) == "table", "provider must be a table")
-    assert(type(provider.id) == "string", "provider.id must be a string")
-    assert(type(provider.priority) == "number", "provider.priority must be a number")
-    assert(type(provider.handle) == "function", "provider.handle must be a function")
-    assert(provider.displayName == nil or type(provider.displayName) == "string",
-        "provider.displayName must be a string or nil")
-
-    for _, p in ipairs(durationProviders) do
-        assert(p.id ~= provider.id, ("A provider with id %q already exists"):format(provider.id))
-    end
-
-    -- insert at sorted position
-    local pos = #durationProviders + 1
-    for i, p in ipairs(durationProviders) do
-        if provider.priority < p.priority then
-            pos = i
-            break
-        end
-    end
-    table.insert(durationProviders, pos, provider)
-end
-
---- Unregisters a previously registered duration provider.
---- @param id string Unique identifier of the provider to remove
-function Addon:UnregisterDurationProvider(id)
-    assert(type(id) == "string", "id must be a string")
-
-    for i, p in ipairs(durationProviders) do
-        if p.id == id then
-            table.remove(durationProviders, i)
-            return
-        end
-    end
-end
-
---- Gets the duration for a cooldown by evaluating registered providers.
---- @param cooldown Cooldown The cooldown frame to evaluate
---- @return DurationObject? duration The duration object from the first matching provider, or nil if none match
-function Addon:GetDuration(cooldown)
-    for _, provider in ipairs(durationProviders) do
-        local success, duration = provider.handle(cooldown)
-        if success then
-            return duration
-        end
-    end
-
-    return nil
 end
 
 --------------------------------------------------------------------------------
