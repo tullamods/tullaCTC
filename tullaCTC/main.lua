@@ -6,7 +6,6 @@ local active = {}
 
 -- text containers for repositioning cooldown font strings
 local textContainers = {}
-local textRatios = {}
 local ACTION_BUTTON_WIDTH = ActionButton1:GetWidth()
 
 -- themer function cache
@@ -35,10 +34,9 @@ end
 local function onCooldownSizeChanged(cooldown, width)
     if not canaccessvalue(width) then return end
 
-    local ratio = width / ACTION_BUTTON_WIDTH
-    if ratio > 0 and textRatios[cooldown] ~= ratio then
-        textRatios[cooldown] = ratio
-        cooldown:GetCountdownFontString():SetScale(ratio)
+    local scale = width / ACTION_BUTTON_WIDTH
+    if scale > 0 then
+        cooldown:GetCountdownFontString():SetScale(scale)
     end
 end
 
@@ -49,6 +47,7 @@ local function onCooldownStart(cooldown)
         cooldown:HookScript("OnShow", onCooldownShow)
         cooldown:HookScript("OnHide", onCooldownHide)
         cooldown:HookScript('OnSizeChanged', onCooldownSizeChanged)
+        cooldown:GetCountdownFontString():SetSmoothScaling(true)
 
         cooldown.tullaCTC = true
     end
