@@ -42,25 +42,25 @@ Addon:RegisterRule {
 Addon:RegisterRule {
     id = "blizzard_cdm_essential",
     priority = 200,
-    match = Addon.MatchName("^EssentialCooldownViewer")
+    match = { "^EssentialCooldownViewer" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_cdm_utility",
     priority = 210,
-    match = Addon.MatchName("^UtilityCooldownViewer")
+    match = { "^UtilityCooldownViewer" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_cdm_buff_icons",
     priority = 220,
-    match = Addon.MatchName("^BuffIconCooldownViewer")
+    match = { "^BuffIconCooldownViewer" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_cdm_buff_bars",
     priority = 230,
-    match = Addon.MatchName("^BuffBarCooldownViewer")
+    match = { "^BuffBarCooldownViewer" }
 }
 
 --------------------------------------------------------------------------------
@@ -71,35 +71,35 @@ Addon:RegisterRule {
 Addon:RegisterRule {
     id = "blizzard_petbar",
     priority = 300,
-    match = Addon.MatchName("^PetActionButton%d+")
+    match = { "^PetActionButton%d+" }
 }
 
 -- Stance/Shapeshift Bar
 Addon:RegisterRule {
     id = "blizzard_stancebar",
     priority = 310,
-    match = Addon.MatchName("^StanceButton%d+")
+    match = { "^StanceButton%d+" }
 }
 
 -- Possess Bar
 Addon:RegisterRule {
     id = "blizzard_possessbar",
     priority = 320,
-    match = Addon.MatchName("^PossessButton%d+")
+    match = { "^PossessButton%d+" }
 }
 
 -- Extra Action Button
 Addon:RegisterRule {
     id = "blizzard_extrabar",
     priority = 330,
-    match = Addon.MatchName("^ExtraActionButton%d+")
+    match = { "^ExtraActionButton%d+" }
 }
 
 -- Zone Ability Button
 Addon:RegisterRule {
     id = "blizzard_zone",
     priority = 340,
-    match = Addon.MatchName("^ZoneAbilityFrame")
+    match = { "^ZoneAbilityFrame" }
 }
 
 --------------------------------------------------------------------------------
@@ -109,43 +109,43 @@ Addon:RegisterRule {
 Addon:RegisterRule {
     id = "blizzard_nameplates",
     priority = 400,
-    match = Addon.MatchName("^NamePlate%d+")
+    match = { "^NamePlate%d+" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_party",
     priority = 410,
-    match = Addon.MatchName("^PartyFrame", "^CompactPartyFrame")
+    match = { "^PartyFrame", "^CompactPartyFrame" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_raid",
     priority = 420,
-    match = Addon.MatchName("^CompactRaidGroup")
+    match = { "^CompactRaidGroup" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_arena",
     priority = 430,
-    match = Addon.MatchName("^CompactArenaFrame")
+    match = { "^CompactArenaFrame" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_target",
     priority = 440,
-    match = Addon.MatchName("^TargetFrame")
+    match = { "^TargetFrame" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_focus",
     priority = 450,
-    match = Addon.MatchName("^FocusFrame")
+    match = { "^FocusFrame" }
 }
 
 Addon:RegisterRule {
     id = "blizzard_pet",
     priority = 460,
-    match = Addon.MatchName("^PetFrame")
+    match = { "^PetFrame" }
 }
 
 --------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ Addon:RegisterRule {
 Addon:RegisterRule {
     id = "blizzard_encounter_timeline",
     priority = 500,
-    match = Addon.MatchName("^EncounterTimeline")
+    match = { "^EncounterTimeline" }
 }
 
 --------------------------------------------------------------------------------
@@ -166,10 +166,7 @@ Addon:RegisterRule {
 Addon:RegisterRule {
     id = "blizzard_container",
     priority = 600,
-    match = Addon.MatchName(
-        "^ContainerFrame",
-        "^PaperDoll"
-    )
+    match = { "^ContainerFrame", "^PaperDoll" }
 }
 
 --------------------------------------------------------------------------------
@@ -181,7 +178,7 @@ EventUtil.ContinueOnAddOnLoaded('ArcUI', function()
         id = "arcui",
         displayName = C_AddOns.GetAddOnMetadata("ArcUI", "Title"),
         priority = 710,
-        match = Addon.MatchName("^CDMGroups")
+        match = { "^CDMGroups" }
     }
 end)
 
@@ -190,7 +187,7 @@ EventUtil.ContinueOnAddOnLoaded('Grid2', function()
         id = "grid2",
         displayName = C_AddOns.GetAddOnMetadata("Grid2", "Title"),
         priority = 720,
-        match = Addon.MatchName("^Grid2Layout")
+        match = { "^Grid2Layout" }
     }
 end)
 
