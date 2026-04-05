@@ -17,10 +17,11 @@ local function getDrawStateBool(state)
     return nil
 end
 
-local function thresholdsComparer(a, b)
+local function thresholdComparer(a, b)
     return a.threshold < b.threshold
 end
 
+-- converts a tullaCTC config into a sorted array of formatter breakpoints
 local function getFormatBreakpoints(config)
     local points = {}
 
@@ -77,33 +78,45 @@ local function getFormatBreakpoints(config)
     return points
 end
 
+-- convert's tullaCTC's config sttings into a sorted array of color breakpoints
 local function getColorBreakpoints(config)
     local points = {}
 
     local textColors = config.textColors
     if textColors and #textColors > 0 then
-        for _, color in pairs(textColors) do
-            tinsert(points, { threshold = color.threshold, color = color.color })
+        for i = 1, #textColors do
+            local entry = textColors[i]
+
+            points[i] = {
+                threshold = entry.threshold,
+                color = Addon.CreateColor(entry.color)
+            }
         end
 
-        tinsert(points, { threshold = math.huge, color = config.defaultTextColor })
-    else
-        tinsert(points, { threshold = 0, color = config.defaultTextColor })
-    end
+        points[#points+1] = {
+            threshold = math.huge,
+            color = Addon.CreateColor(config.defaultTextColor)
+        }
 
-    table.sort(points, thresholdsComparer)
+        table.sort(points, thresholdComparer)
 
-    if #points > 1 then
+        -- tullaCTC's thresholds are end times, convert to start times
         for i = #points, 2, -1 do
             points[i].threshold = points[i - 1].threshold
         end
+        points[1].threshold = 0
+    else
+        points[1] = {
+            threshold = 0,
+            color = Addon.CreateColor(config.defaultTextColor)
+        }
     end
-
-    points[1].threshold = 0
 
     return points
 end
 
+-- merge colorRGB and formatter breakpoints into breakpoint objects
+-- precondition: both colors and formats need to be sorted by threshold values
 local function createBreakpoints(colors, formats)
     local breakpoints = {}
     local i = 1
@@ -117,7 +130,7 @@ local function createBreakpoints(colors, formats)
 
         if c and (not f or c.threshold < f.threshold) then
             threshold = c.threshold
-            color = Addon.CreateColor(c.color)
+            color = c.color
 
             i = i + 1
         elseif f and (not c or f.threshold < c.threshold) then
@@ -128,7 +141,7 @@ local function createBreakpoints(colors, formats)
             j = j + 1
         else
             threshold = c.threshold
-            color = Addon.CreateColor(c.color)
+            color = c.color
             format = f.format
             components = f.components
 
@@ -136,11 +149,11 @@ local function createBreakpoints(colors, formats)
             j = j + 1
         end
 
-        tinsert(breakpoints, {
+        breakpoints[#breakpoints + 1] = {
             threshold = threshold,
-            format = color:WrapTextInColorCode(format),
+            format = color and color:WrapTextInColorCode(format) or format,
             components = components
-        })
+        }
     end
 
     return breakpoints
