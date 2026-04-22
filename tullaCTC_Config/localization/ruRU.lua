@@ -39,10 +39,10 @@ L.Reverse = 'Обратить'
 L.ReverseDesc = 'Обратить направление затемнения'
 L.SwipeColor = 'Цвет затемнения'
 L.SwipeColorDesc = 'Заменить цвет анимации затемнения восстановления'
-L.UseAuraDisplayTime = 'Округление длительности ауры'
-L.UseAuraDisplayTimeDesc = 'Управление округлением длительности ауры. Всегда округляет вниз, Никогда округляет вверх'
 
 -- Countdown text options
+L.RoundingMode = 'Режим округления'
+L.RoundingModeDesc = 'Определяет способ округления значений длительности'
 L.MinDuration = 'Минимальная длительность'
 L.MinDurationDesc = 'Минимальная длительность восстановления в секундах для отображения текста обратного отсчёта'
 L.TenthsThreshold = 'Порог десятых'
@@ -76,6 +76,11 @@ L.VerticalOffset = 'Вертикальное смещение'
 L.DrawState_default = 'По умолчанию'
 L.DrawState_always = 'Всегда'
 L.DrawState_never = 'Никогда'
+
+-- Rounding mode values
+L.RoundingMode_Up = 'Вверх'
+L.RoundingMode_Down = 'Вниз'
+L.RoundingMode_Nearest = 'Ближайшее'
 
 -- Color threshold UI
 L.AddColorThreshold = 'Добавить цветовой порог'

@@ -18,6 +18,14 @@ local DRAW_VALUES = {
     never   = L.DrawState_never,
 }
 
+local ROUNDING_MODE_VALUES = {
+    Up = L.RoundingMode_Up,
+    Down = L.RoundingMode_Down,
+    Nearest = L.RoundingMode_Nearest
+}
+
+local ROUNDING_MODE_ORDER = { "Nearest", "Up", "Down" }
+
 local function parseThreshold(val)
     local num = tonumber(strtrim(val))
     if num and num > 0 then return num end
@@ -283,12 +291,11 @@ local function buildThemeContent(scrollChild, theme)
     })
 
     add("AddDropdown", {
-        property = 'useAuraDisplayTime',
-        name = L.UseAuraDisplayTime,
-        desc = L.UseAuraDisplayTimeDesc,
-        values =
-            DRAW_VALUES,
-        order = DRAW_ORDER
+        property = 'roundingMode',
+        name = L.RoundingMode,
+        desc = L.RoundingModeDesc,
+        values = ROUNDING_MODE_VALUES,
+        order = ROUNDING_MODE_ORDER
     })
 
     add("AddSlider", {

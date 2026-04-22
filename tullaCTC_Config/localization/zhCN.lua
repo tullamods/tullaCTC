@@ -39,10 +39,10 @@ L.Reverse = '反转'
 L.ReverseDesc = '反转扫过方向'
 L.SwipeColor = '扫过颜色'
 L.SwipeColorDesc = '覆盖冷却扫过动画的颜色'
-L.UseAuraDisplayTime = '光环持续时间取整'
-L.UseAuraDisplayTimeDesc = '控制光环持续时间的取整方式。始终向下取整，从不向上取整'
 
 -- Countdown text options
+L.RoundingMode = '舍入模式'
+L.RoundingModeDesc = '控制持续时间数值的舍入方式'
 L.MinDuration = '最短持续时间'
 L.MinDurationDesc = '冷却时间需要多长（秒）才会显示倒计时文字'
 L.TenthsThreshold = '小数阈值'
@@ -76,6 +76,11 @@ L.VerticalOffset = '垂直偏移'
 L.DrawState_default = '默认'
 L.DrawState_always = '始终'
 L.DrawState_never = '从不'
+
+-- Rounding mode values
+L.RoundingMode_Up = '向上'
+L.RoundingMode_Down = '向下'
+L.RoundingMode_Nearest = '四舍五入'
 
 -- Color threshold UI
 L.AddColorThreshold = '添加颜色阈值'

@@ -23,22 +23,58 @@ end
 
 -- converts a tullaCTC config into a sorted array of formatter breakpoints
 local function getFormatBreakpoints(config)
+    local rounding = Enum.NumericRuleFormatRounding[config.roundingMode]
+    if rounding == nil then
+        rounding = Enum.NumericRuleFormatRounding
+    end
+
     local points = {}
 
     if (config.tenthsThreshold or -1) > 0 then
         tinsert(points, {
             threshold = 0,
             format = '%.1f',
+            step = 0.1,
+            rounding = rounding
         })
 
         tinsert(points, {
             threshold = config.tenthsThreshold,
             format = '%d',
+            step = 1,
+            rounding = rounding
+        })
+    elseif rounding == Enum.NumericRuleFormatRounding.Down then
+        tinsert(points, {
+            threshold = 0,
+            format = '',
+            rounding = rounding
+        })
+
+        tinsert(points, {
+            threshold = 1,
+            format = '%d',
+            rounding = rounding
+        })
+    elseif rounding == Enum.NumericRuleFormatRounding.Up then
+        tinsert(points, {
+            threshold = 0,
+            format = '%d',
+            step = 1,
+            rounding = rounding
         })
     else
         tinsert(points, {
             threshold = 0,
+            format = '',
+            rounding = rounding
+        })
+
+        tinsert(points, {
+            threshold = 0.5,
             format = '%d',
+            step = 1,
+            rounding = rounding
         })
     end
 
@@ -47,18 +83,24 @@ local function getFormatBreakpoints(config)
         tinsert(points, {
             threshold = MINUTE,
             format = '%d:%02d',
+            step = 1,
+            rounding = rounding,
             components = { { div = MINUTE} , { mod = MINUTE } },
         })
 
         tinsert(points, {
             threshold = mmssThreshold,
             format = '%dm',
+            step = 1,
+            rounding = rounding,
             components = { { div = MINUTE } },
         })
     else
         tinsert(points, {
             threshold = MINUTE,
             format = '%dm',
+            step = 1,
+            rounding = rounding,
             components = { { div = MINUTE } },
         })
     end
@@ -66,12 +108,16 @@ local function getFormatBreakpoints(config)
     tinsert(points, {
         threshold = HOUR,
         format = '%dh',
-        components = { { div = HOUR } }
+        step = 1,
+        rounding = rounding,
+        components = { { div = HOUR } },
     })
 
     tinsert(points, {
         threshold = DAY,
         format = '%dd',
+        step = 1,
+        rounding = rounding,
         components = { { div = DAY } },
     })
 
@@ -119,40 +165,36 @@ end
 -- precondition: both colors and formats need to be sorted by threshold values
 local function createBreakpoints(colors, formats)
     local breakpoints = {}
-    local i = 1
-    local j = 1
-    local color, format, components
+    local i, j = 1, 1
+    local state = { format = "" } -- Persistent "current" values
 
-    while (i <= #colors or j <= #formats) do
-        local c = colors[i]
-        local f = formats[j]
+    while colors[i] or formats[j] do
+        local c, f = colors[i], formats[j]
         local threshold
 
-        if c and (not f or c.threshold < f.threshold) then
+        -- 1. Process Color if it's next (or ties with format)
+        if c and (not f or c.threshold <= f.threshold) then
             threshold = c.threshold
-            color = c.color
-
+            state.color = c.color
             i = i + 1
-        elseif f and (not c or f.threshold < c.threshold) then
+        end
+
+        -- 2. Process Format if it's next (or ties with color)
+        if f and (not threshold or f.threshold <= threshold) then
             threshold = f.threshold
-            format = f.format
-            components = f.components
-
-            j = j + 1
-        else
-            threshold = c.threshold
-            color = c.color
-            format = f.format
-            components = f.components
-
-            i = i + 1
+            for k, v in pairs(f) do state[k] = v end -- Update all format keys
             j = j + 1
         end
 
+        -- 3. Save a "snapshot" of the current state
         breakpoints[#breakpoints + 1] = {
-            threshold = threshold,
-            format = color and color:WrapTextInColorCode(format) or format,
-            components = components
+            threshold  = threshold,
+            step       = state.step,
+            rounding   = state.rounding,
+            min        = state.min,
+            max        = state.max,
+            format     = state.color and state.color:WrapTextInColorCode(state.format) or state.format,
+            components = state.components
         }
     end
 

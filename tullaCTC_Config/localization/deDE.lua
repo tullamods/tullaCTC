@@ -39,10 +39,10 @@ L.Reverse = 'Umkehren'
 L.ReverseDesc = 'Richtung des Wischeffekts umkehren'
 L.SwipeColor = 'Wischfarbe'
 L.SwipeColorDesc = 'Farbe der Abklingzeit-Wischanimation überschreiben'
-L.UseAuraDisplayTime = 'Aura-Dauerrundung'
-L.UseAuraDisplayTimeDesc = 'Steuert die Rundung der Aura-Dauer. Immer rundet ab, Nie rundet auf'
 
 -- Countdown text options
+L.RoundingMode = 'Rundungsmodus'
+L.RoundingModeDesc = 'Legt fest, wie Zeitangaben gerundet werden'
 L.MinDuration = 'Minimaldauer'
 L.MinDurationDesc = 'Wie lang eine Abklingzeit in Sekunden sein muss, um den Countdown-Text anzuzeigen'
 L.TenthsThreshold = 'Zehntel-Schwelle'
@@ -76,6 +76,11 @@ L.VerticalOffset = 'Vertikaler Versatz'
 L.DrawState_default = 'Standard'
 L.DrawState_always = 'Immer'
 L.DrawState_never = 'Nie'
+
+-- Rounding mode values
+L.RoundingMode_Up = 'Aufrunden'
+L.RoundingMode_Down = 'Abrunden'
+L.RoundingMode_Nearest = 'Kaufmännisch'
 
 -- Color threshold UI
 L.AddColorThreshold = 'Farbschwelle hinzufügen'

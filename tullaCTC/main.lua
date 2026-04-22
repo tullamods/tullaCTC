@@ -6,7 +6,7 @@ local active = {}
 
 -- text containers for repositioning cooldown font strings
 local textContainers = {}
-local ACTION_BUTTON_WIDTH = ActionButton1:GetWidth()
+local SCALE_BASE = Round(ActionButton1.cooldown:GetWidth())
 
 -- themer function cache
 local themers = setmetatable({}, {
@@ -18,6 +18,17 @@ local themers = setmetatable({}, {
         return themer
     end
 })
+
+local function getThemeSettings(cooldown)
+    if issecretvalue(cooldown) then return end
+
+    local themeName = Addon:GetThemeName(cooldown)
+    local theme = Addon.db.profile.themes[themeName]
+
+    if theme.enabled then
+        return theme
+    end
+end
 
 local function onCooldownShow(cooldown)
     if issecretvalue(cooldown) then return end
@@ -34,10 +45,18 @@ end
 local function onCooldownSizeChanged(cooldown, width)
     if not canaccessvalue(width) then return end
 
-    local scale = width / ACTION_BUTTON_WIDTH
-    if scale > 0 then
-        cooldown:GetCountdownFontString():SetScale(scale)
+    local theme = getThemeSettings(cooldown)
+
+    local scale, alpha = 1, 1
+    if theme and width > 0 then
+
+        scale = theme.scaleText and (Round(width) / SCALE_BASE) or 1
+        alpha = Round(scale * 100) >= Round(theme.minScale * 100) and 1 or 0
     end
+
+    local fs = cooldown:GetCountdownFontString()
+    fs:SetAlpha(alpha)
+    fs:SetScale(scale)
 end
 
 local function onCooldownStart(cooldown)
@@ -69,8 +88,9 @@ local function onCooldownStart(cooldown)
         end
     end
 
-    local func = themers[Addon:GetThemeName(cooldown)]
-    func(cooldown)
+    themers[Addon:GetThemeName(cooldown)](cooldown)
+    onCooldownSizeChanged(cooldown, cooldown:GetWidth())
+    active[cooldown] = cooldown:IsVisible()
 end
 
 local function getActiveTheme(cooldown)
@@ -145,7 +165,6 @@ function Addon:OnLoad()
     enforceCooldownSetting('SetDrawEdge', 'drawEdge')
     enforceCooldownSetting('SetDrawSwipe', 'drawSwipe')
     enforceCooldownSetting('SetReverse', 'reverse')
-    enforceCooldownSetting('SetUseAuraDisplayTime', 'useAuraDisplayTime')
 
     hooksecurefunc(CooldownMT, 'SetSwipeColor', lock(function(cooldown, r, g, b, a)
         local theme = getActiveTheme(cooldown)
@@ -247,6 +266,10 @@ function Addon:GetDBDefaults()
                     shadowX = 0,
                     shadowY = 0,
 
+                    -- text scaling and visibility
+                    scaleText = false,
+                    minScale = 0,
+
                     -- how long a cooldown must be in order to display text
                     minDuration = 3,
 
@@ -255,6 +278,9 @@ function Addon:GetDBDefaults()
 
                     -- this currently controls the MM:SS display duration
                     abbrevThreshold = 90,
+
+                    -- key of Enum.NumericRuleFormatRounding
+                    roundingMode = "Nearest",
 
                     -- array of {threshold, color} entries
                     -- thresholds are specified in seconds and represent the
@@ -271,6 +297,26 @@ function Addon:GetDBDefaults()
 
                 -- default styling with conditional colors
                 default = {
+                    textColors = {
+                        -- soon (0 - 5s)
+                        { threshold = 5,    color = "FF6347FF" },
+                        -- seconds (5 - 60s)
+                        { threshold = 60,   color = "FFFF00FF" },
+                        -- minutes (60 - 3600s)
+                        { threshold = 3600, color = "FFFFFFFF" },
+                    },
+
+                    defaultTextColor = "AAAAAAFF"
+                },
+
+                omnicc = {
+                    fontSize = 18,
+                    drawText = "always",
+                    minDuration = 2,
+                    abbrevThreshold = 0,
+                    scaleText = true,
+                    minScale = 1,
+
                     textColors = {
                         -- soon (0 - 5s)
                         { threshold = 5,    color = "FF6347FF" },
@@ -329,6 +375,8 @@ do
         for cooldown in pairs(active) do
             local themeName = Addon:GetThemeName(cooldown)
             local func = themers[themeName]
+
+            onCooldownSizeChanged(cooldown, cooldown:GetWidth())
 
             func(cooldown)
         end

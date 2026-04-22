@@ -39,10 +39,10 @@ L.Reverse = 'Invertir'
 L.ReverseDesc = 'Invertir la dirección del barrido'
 L.SwipeColor = 'Color de barrido'
 L.SwipeColorDesc = 'Anular el color de la animación de barrido de reutilización'
-L.UseAuraDisplayTime = 'Redondeo de duración de aura'
-L.UseAuraDisplayTimeDesc = 'Controla el redondeo de las duraciones de aura. Siempre redondea hacia abajo, Nunca redondea hacia arriba'
 
 -- Countdown text options
+L.RoundingMode = 'Modo de redondeo'
+L.RoundingModeDesc = 'Controla la forma en que se redondean los valores de duración'
 L.MinDuration = 'Duración mínima'
 L.MinDurationDesc = 'Cuánto tiempo, en segundos, debe durar una reutilización para mostrar el texto de cuenta regresiva'
 L.TenthsThreshold = 'Umbral de décimas'
@@ -76,6 +76,11 @@ L.VerticalOffset = 'Desplazamiento vertical'
 L.DrawState_default = 'Predeterminado'
 L.DrawState_always = 'Siempre'
 L.DrawState_never = 'Nunca'
+
+-- Rounding mode values
+L.RoundingMode_Up = 'Hacia arriba'
+L.RoundingMode_Down = 'Hacia abajo'
+L.RoundingMode_Nearest = 'Al más cercano'
 
 -- Color threshold UI
 L.AddColorThreshold = 'Añadir umbral de color'
