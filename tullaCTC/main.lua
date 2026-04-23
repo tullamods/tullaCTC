@@ -19,8 +19,8 @@ local themers = setmetatable({}, {
     end
 })
 
-local function getThemeSettings(cooldown)
-    if issecretvalue(cooldown) then return end
+local function getTheme(cooldown)
+    if issecretvalue(cooldown) or cooldown.noCooldownCount then return end
 
     local themeName = Addon:GetThemeName(cooldown)
     local theme = Addon.db.profile.themes[themeName]
@@ -43,12 +43,10 @@ local function onCooldownHide(cooldown)
 end
 
 local function onCooldownSizeChanged(cooldown, width)
-    if not canaccessvalue(width) then return end
-
-    local theme = getThemeSettings(cooldown)
-
+    local theme = getTheme(cooldown)
     local scale, alpha = 1, 1
-    if theme and width > 0 then
+
+    if theme and canaccessvalue(width) and width > 0 then
 
         scale = theme.scaleText and (Round(width) / SCALE_BASE) or 1
         alpha = Round(scale * 100) >= Round(theme.minScale * 100) and 1 or 0
@@ -93,17 +91,6 @@ local function onCooldownStart(cooldown)
     active[cooldown] = cooldown:IsVisible()
 end
 
-local function getActiveTheme(cooldown)
-    if issecretvalue(cooldown) then return end
-
-    local themeName = Addon:GetThemeName(cooldown)
-    local theme = Addon.db.profile.themes[themeName]
-
-    if theme.enabled then
-        return theme
-    end
-end
-
 function Addon:OnLoad()
     -- initialize db
     local db = LibStub('AceDB-3.0'):New(DB_NAME, self:GetDBDefaults(), DEFAULT)
@@ -146,7 +133,7 @@ function Addon:OnLoad()
 
     local function enforceCooldownSetting(method, setting)
         hooksecurefunc(CooldownMT, method, lock(function(cooldown, value)
-            local theme = getActiveTheme(cooldown)
+            local theme = getTheme(cooldown)
             if not (theme and theme.themeText) then return end
 
             if theme[setting] == "always" then
@@ -167,7 +154,7 @@ function Addon:OnLoad()
     enforceCooldownSetting('SetReverse', 'reverse')
 
     hooksecurefunc(CooldownMT, 'SetSwipeColor', lock(function(cooldown, r, g, b, a)
-        local theme = getActiveTheme(cooldown)
+        local theme = getTheme(cooldown)
         if not (theme and theme.themeCooldown and theme.themeSwipeColor) then
             return
         end
@@ -179,7 +166,7 @@ function Addon:OnLoad()
     end))
 
     hooksecurefunc(CooldownMT, 'SetHideCountdownNumbers', lock(function(cooldown, hide)
-        local theme = getActiveTheme(cooldown)
+        local theme = getTheme(cooldown)
         if not (theme and theme.themeText) then return end
 
         if theme.drawText == "always" then
@@ -192,6 +179,12 @@ function Addon:OnLoad()
             end
         end
     end))
+
+    hooksecurefunc('CooldownFrame_SetDisplayAsPercentage', function(cooldown)
+        if issecretvalue(cooldown) or cooldown.noCooldownCount then return end
+
+        cooldown.noCooldownCount = true
+    end)
 
     -- setup launcher commands
     local function showOptionsFrame()
@@ -315,7 +308,7 @@ function Addon:GetDBDefaults()
                     minDuration = 2,
                     abbrevThreshold = 0,
                     scaleText = true,
-                    minScale = 1,
+                    minScale = 0.5,
 
                     textColors = {
                         -- soon (0 - 5s)
