@@ -25,7 +25,7 @@ end
 local function getFormatBreakpoints(config)
     local rounding = Enum.NumericRuleFormatRounding[config.roundingMode]
     if rounding == nil then
-        rounding = Enum.NumericRuleFormatRounding
+        rounding = Enum.NumericRuleFormatRounding.Nearest
     end
 
     local points = {}
@@ -41,7 +41,6 @@ local function getFormatBreakpoints(config)
         tinsert(points, {
             threshold = config.tenthsThreshold,
             format = '%d',
-            step = 1,
             rounding = rounding
         })
     elseif rounding == Enum.NumericRuleFormatRounding.Down then
@@ -60,7 +59,6 @@ local function getFormatBreakpoints(config)
         tinsert(points, {
             threshold = 0,
             format = '%d',
-            step = 1,
             rounding = rounding
         })
     else
@@ -73,7 +71,6 @@ local function getFormatBreakpoints(config)
         tinsert(points, {
             threshold = 0.5,
             format = '%d',
-            step = 1,
             rounding = rounding
         })
     end
@@ -83,7 +80,6 @@ local function getFormatBreakpoints(config)
         tinsert(points, {
             threshold = MINUTE,
             format = '%d:%02d',
-            step = 1,
             rounding = rounding,
             components = { { div = MINUTE} , { mod = MINUTE } },
         })
@@ -91,7 +87,6 @@ local function getFormatBreakpoints(config)
         tinsert(points, {
             threshold = mmssThreshold,
             format = '%dm',
-            step = 1,
             rounding = rounding,
             components = { { div = MINUTE } },
         })
@@ -99,7 +94,6 @@ local function getFormatBreakpoints(config)
         tinsert(points, {
             threshold = MINUTE,
             format = '%dm',
-            step = 1,
             rounding = rounding,
             components = { { div = MINUTE } },
         })
@@ -108,7 +102,6 @@ local function getFormatBreakpoints(config)
     tinsert(points, {
         threshold = HOUR,
         format = '%dh',
-        step = 1,
         rounding = rounding,
         components = { { div = HOUR } },
     })
@@ -116,7 +109,6 @@ local function getFormatBreakpoints(config)
     tinsert(points, {
         threshold = DAY,
         format = '%dd',
-        step = 1,
         rounding = rounding,
         components = { { div = DAY } },
     })
