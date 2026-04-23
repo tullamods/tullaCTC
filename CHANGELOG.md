@@ -1,5 +1,10 @@
 # tullaCTC Version History
 
+## v12.0.6
+
+* Adjusted scaling defaults for the OmniCC theme
+* Cooldowns that are more like
+
 ## v12.0.5
 
 * tullaCTC now uses the new Cooldown:SetCountdownFormatter API to style cooldowns. Eliminated the need for periodic update handlers.

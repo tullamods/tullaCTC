@@ -184,6 +184,7 @@ function Addon:OnLoad()
         if issecretvalue(cooldown) or cooldown.noCooldownCount then return end
 
         cooldown.noCooldownCount = true
+        cooldown:SetHideCountdownNumbers(true)
     end)
 
     -- setup launcher commands
