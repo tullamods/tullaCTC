@@ -3,7 +3,7 @@
 ## v12.0.6
 
 * Adjusted scaling defaults for the OmniCC theme
-* Cooldowns that are more like
+* Better handle percentage cooldowns
 
 ## v12.0.5
 
