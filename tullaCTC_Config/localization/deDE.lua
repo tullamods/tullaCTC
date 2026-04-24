@@ -49,6 +49,8 @@ L.TenthsThreshold = 'Zehntel-Schwelle'
 L.TenthsThresholdDesc = 'Zehntel Sekunden anzeigen, wenn die verbleibende Abklingzeit unter diesem Wert liegt'
 L.AbbrevThreshold = 'MM:SS-Schwelle'
 L.AbbrevThresholdDesc = 'Wie lang in Sekunden, bevor der Abklingzeit-Text auf MM:SS-Format wechselt (z.B. "1:30" statt "90")'
+L.ShowZero = 'Null anzeigen'
+L.ShowZeroDesc = '"0" für auf Null gerundete Abklingzeiten anstelle von leerem Text anzeigen'
 
 -- Font options
 L.FontFace = 'Schriftart'

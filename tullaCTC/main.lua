@@ -267,14 +267,29 @@ function Addon:GetDBDefaults()
                     -- how long a cooldown must be in order to display text
                     minDuration = 3,
 
-                    -- tenths duration (0.1s)
+                    -- tenths duration (0.1)
                     tenthsThreshold = 0,
 
-                    -- this currently controls the MM:SS display duration
+                    -- minutes format (1m)
+                    minutesThreshold = 60,
+
+                    -- mm:ss format (12:00)
                     abbrevThreshold = 90,
+
+                    -- hours format (4h)
+                    hoursThreshold = 3600,
+
+                    -- days format (7d)
+                    daysThreshold = 86400,
+
+                    -- weeks format (1w)
+                    weeksThreshold = 604800,
 
                     -- key of Enum.NumericRuleFormatRounding
                     roundingMode = "Nearest",
+
+                    -- show zero for rounding modes that would show empty at threshold 0
+                    showZero = false,
 
                     -- array of {threshold, color} entries
                     -- thresholds are specified in seconds and represent the

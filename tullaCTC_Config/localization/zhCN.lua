@@ -49,6 +49,8 @@ L.TenthsThreshold = '小数阈值'
 L.TenthsThresholdDesc = '当剩余冷却时间低于此值时显示十分之一秒'
 L.AbbrevThreshold = 'MM:SS阈值'
 L.AbbrevThresholdDesc = '冷却文字切换到MM:SS格式之前的时间（秒）（例如用"1:30"代替"90"）'
+L.ShowZero = '显示零'
+L.ShowZeroDesc = '对向下/趋近于零的冷却时间显示"0"而非空白'
 
 -- Font options
 L.FontFace = '字体'

@@ -49,6 +49,8 @@ L.TenthsThreshold = 'Umbral de décimas'
 L.TenthsThresholdDesc = 'Mostrar décimas de segundo cuando la reutilización restante sea menor que este valor'
 L.AbbrevThreshold = 'Umbral MM:SS'
 L.AbbrevThresholdDesc = 'Cuánto tiempo, en segundos, antes de que el texto cambie a formato MM:SS (ej. "1:30" en lugar de "90")'
+L.ShowZero = 'Mostrar Cero'
+L.ShowZeroDesc = 'Mostrar "0" para tiempos de reutilización redondeados a cero en lugar de texto vacío'
 
 -- Font options
 L.FontFace = 'Fuente'

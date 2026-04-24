@@ -49,6 +49,8 @@ L.TenthsThreshold = 'Seuil de dixièmes'
 L.TenthsThresholdDesc = 'Afficher les dixièmes de seconde quand le temps de recharge restant est inférieur à cette valeur'
 L.AbbrevThreshold = 'Seuil MM:SS'
 L.AbbrevThresholdDesc = 'Durée, en secondes, avant que le texte passe au format MM:SS (ex. "1:30" au lieu de "90")'
+L.ShowZero = 'Afficher Zéro'
+L.ShowZeroDesc = 'Afficher "0" pour les temps de recharge arrondis à zéro au lieu d\'un texte vide'
 
 -- Font options
 L.FontFace = 'Police'

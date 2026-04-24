@@ -50,6 +50,8 @@ L.TenthsThreshold = 'Tenths Threshold'
 L.TenthsThresholdDesc = 'Show tenths of seconds when the cooldown remaining is below this value'
 L.AbbrevThreshold = 'MM:SS Threshold'
 L.AbbrevThresholdDesc = 'How long, in seconds, before cooldown text switches to MM:SS format (e.g., "1:30" instead of "90")'
+L.ShowZero = 'Show Zero'
+L.ShowZeroDesc = 'Show "0" for cooldowns rounded to zero instead of empty text'
 
 -- Font options
 L.FontFace = 'Font'

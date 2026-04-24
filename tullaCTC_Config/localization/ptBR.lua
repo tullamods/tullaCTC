@@ -49,6 +49,8 @@ L.TenthsThreshold = 'Limite de décimos'
 L.TenthsThresholdDesc = 'Mostrar décimos de segundo quando a recarga restante for menor que este valor'
 L.AbbrevThreshold = 'Limite MM:SS'
 L.AbbrevThresholdDesc = 'Quanto tempo, em segundos, antes do texto mudar para formato MM:SS (ex. "1:30" em vez de "90")'
+L.ShowZero = 'Mostrar Zero'
+L.ShowZeroDesc = 'Mostrar "0" para tempos de recarga arredondados para zero em vez de texto vazio'
 
 -- Font options
 L.FontFace = 'Fonte'

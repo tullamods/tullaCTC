@@ -49,6 +49,8 @@ L.TenthsThreshold = '소수점 임계값'
 L.TenthsThresholdDesc = '남은 재사용 대기시간이 이 값 미만일 때 소수점 이하를 표시합니다'
 L.AbbrevThreshold = 'MM:SS 임계값'
 L.AbbrevThresholdDesc = '텍스트가 MM:SS 형식으로 전환되기까지의 시간(초) (예: "90" 대신 "1:30")'
+L.ShowZero = '0 표시'
+L.ShowZeroDesc = '내림/가장가까운값으로 0이 되는 재사용 시간에 "0" 대신 빈 텍스트 표시'
 
 -- Font options
 L.FontFace = '글꼴'

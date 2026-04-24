@@ -49,6 +49,8 @@ L.TenthsThreshold = 'Soglia decimi'
 L.TenthsThresholdDesc = 'Mostra i decimi di secondo quando il tempo di recupero rimanente è inferiore a questo valore'
 L.AbbrevThreshold = 'Soglia MM:SS'
 L.AbbrevThresholdDesc = 'Quanto tempo, in secondi, prima che il testo passi al formato MM:SS (es. "1:30" invece di "90")'
+L.ShowZero = 'Mostra Zero'
+L.ShowZeroDesc = 'Mostra "0" per i tempi di ricarica arrotondati a zero invece del testo vuoto'
 
 -- Font options
 L.FontFace = 'Carattere'

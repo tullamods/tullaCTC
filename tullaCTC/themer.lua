@@ -5,6 +5,7 @@ local _, Addon = ...
 local MINUTE = 60
 local HOUR = MINUTE * 60
 local DAY = HOUR * 24
+local WEEK = DAY * 7
 local NOOP = function() end
 
 -- converts draw state enum values into a bool|nil
@@ -23,95 +24,135 @@ end
 
 -- converts a tullaCTC config into a sorted array of formatter breakpoints
 local function getFormatBreakpoints(config)
-    local rounding = Enum.NumericRuleFormatRounding[config.roundingMode]
-    if rounding == nil then
-        rounding = Enum.NumericRuleFormatRounding.Nearest
+    local roundingMode = Enum.NumericRuleFormatRounding[config.roundingMode]
+    if roundingMode == nil then
+        roundingMode = Enum.NumericRuleFormatRounding.Nearest
     end
 
     local points = {}
-
-    if (config.tenthsThreshold or -1) > 0 then
+    if (config.tenthsThreshold or 0) > 0 then
         tinsert(points, {
             threshold = 0,
             format = '%.1f',
-            step = 0.1,
-            rounding = rounding
+            rounding = roundingMode,
+            step = 1
         })
 
         tinsert(points, {
             threshold = config.tenthsThreshold,
             format = '%d',
-            rounding = rounding
+            rounding = roundingMode,
+            step = 1
         })
-    elseif rounding == Enum.NumericRuleFormatRounding.Down then
+    elseif roundingMode == Enum.NumericRuleFormatRounding.Up then
         tinsert(points, {
             threshold = 0,
-            format = '',
-            rounding = rounding
+            format = '%d',
+            rounding = roundingMode,
+            step = 1
         })
+    elseif roundingMode == Enum.NumericRuleFormatRounding.Down then
+        if config.showZero then
+            tinsert(points, {
+                threshold = 0,
+                format = '%d',
+                rounding = roundingMode,
+                step = 1
+            })
+        else
+            tinsert(points, {
+                threshold = 0,
+                format = '',
+                rounding = roundingMode,
+                step = 1
+            })
 
-        tinsert(points, {
-            threshold = 1,
-            format = '%d',
-            rounding = rounding
-        })
-    elseif rounding == Enum.NumericRuleFormatRounding.Up then
-        tinsert(points, {
-            threshold = 0,
-            format = '%d',
-            rounding = rounding
-        })
+            tinsert(points, {
+                threshold = 1,
+                format = '%d',
+                rounding = roundingMode,
+                step = 1
+            })
+        end
     else
-        tinsert(points, {
-            threshold = 0,
-            format = '',
-            rounding = rounding
-        })
+        if config.showZero then
+            tinsert(points, {
+                threshold = 0,
+                format = '%d',
+                rounding = roundingMode,
+                step = 1
+            })
+        else
+            tinsert(points, {
+                threshold = 0,
+                format = '',
+                rounding = roundingMode,
+                step = 1
+            })
 
-        tinsert(points, {
-            threshold = 0.5,
-            format = '%d',
-            rounding = rounding
-        })
+            tinsert(points, {
+                threshold = 0.5,
+                format = '%d',
+                rounding = roundingMode,
+                step = 1
+            })
+        end
     end
 
-    local mmssThreshold = config.abbrevThreshold
-    if mmssThreshold > 0 then
-        tinsert(points, {
-            threshold = MINUTE,
-            format = '%d:%02d',
-            rounding = rounding,
-            components = { { div = MINUTE} , { mod = MINUTE } },
-        })
+    local prevThreshold = points[#points].threshold
 
+    local mmssThreshold = config.abbrevThreshold or 0
+    if mmssThreshold > prevThreshold then
         tinsert(points, {
             threshold = mmssThreshold,
-            format = '%dm',
-            rounding = rounding,
-            components = { { div = MINUTE } },
+            format = '%d:%02d',
+            components = { { div = MINUTE } , { mod = MINUTE, rounding = roundingMode, step = 1 } },
         })
-    else
-        tinsert(points, {
-            threshold = MINUTE,
-            format = '%dm',
-            rounding = rounding,
-            components = { { div = MINUTE } },
-        })
+
+        prevThreshold = points[#points].threshold
     end
 
-    tinsert(points, {
-        threshold = HOUR,
-        format = '%dh',
-        rounding = rounding,
-        components = { { div = HOUR } },
-    })
+    local minutesThreshold = config.minutesThreshold or 0
+    if minutesThreshold > prevThreshold then
+        tinsert(points, {
+            threshold = minutesThreshold,
+            format = '%dm',
+            components = { { div = MINUTE, rounding = roundingMode, step = 1 } },
+        })
 
-    tinsert(points, {
-        threshold = DAY,
-        format = '%dd',
-        rounding = rounding,
-        components = { { div = DAY } },
-    })
+        prevThreshold = points[#points].threshold
+    end
+
+    local hoursThreshold = config.hoursThreshold or 0
+    if hoursThreshold > prevThreshold then
+        tinsert(points, {
+            threshold = hoursThreshold,
+            format = '%dh',
+            components = { { div = HOUR, rounding = roundingMode, step = 1 } },
+        })
+
+        prevThreshold = points[#points].threshold
+    end
+
+    local daysThreshold = config.daysThreshold or 0
+    if daysThreshold > prevThreshold then
+        tinsert(points, {
+            threshold = daysThreshold,
+            format = '%dd',
+            components = { { div = DAY, rounding = roundingMode, step = 1 } },
+        })
+
+        prevThreshold = points[#points].threshold
+    end
+
+    local weeksThreshold = config.weeksThreshold or 0
+    if weeksThreshold > prevThreshold then
+        tinsert(points, {
+            threshold = weeksThreshold,
+            format = '%dw',
+            components = { { div = WEEK, rounding = roundingMode, step = 1 } },
+        })
+    end
 
     return points
 end

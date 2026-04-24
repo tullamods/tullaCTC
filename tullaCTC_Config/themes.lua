@@ -298,6 +298,12 @@ local function buildThemeContent(scrollChild, theme)
         order = ROUNDING_MODE_ORDER
     })
 
+    add("AddCheckBox", {
+        property = 'showZero',
+        name = L.ShowZero,
+        desc = L.ShowZeroDesc,
+    })
+
     add("AddSlider", {
         property = 'minDuration',
         name = L.MinDuration,

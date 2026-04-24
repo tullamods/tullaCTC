@@ -1,5 +1,11 @@
 # tullaCTC Version History
 
+## v12.0.7
+
+* Fixed some issues with the new rounding options
+* Added a "Show Zero" checkbox for controlling whether or not to show 0 when using the Nearest or Down rounding modes
+* Adjusted text format breakpoint values to be settings driven instead of using hardcoded values.
+
 ## v12.0.6
 
 * Adjusted scaling defaults for the OmniCC theme
