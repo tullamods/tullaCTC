@@ -199,34 +199,40 @@ end
 local function createBreakpoints(colors, formats)
     local breakpoints = {}
     local i, j = 1, 1
-    local state = { format = "" } -- Persistent "current" values
+    local state = {}
 
     while colors[i] or formats[j] do
         local c, f = colors[i], formats[j]
-        local threshold
 
         -- 1. Process Color if it's next (or ties with format)
         if c and (not f or c.threshold <= f.threshold) then
-            threshold = c.threshold
+            state.threshold = c.threshold
             state.color = c.color
+            
             i = i + 1
         end
 
         -- 2. Process Format if it's next (or ties with color)
-        if f and (not threshold or f.threshold <= threshold) then
-            threshold = f.threshold
-            for k, v in pairs(f) do state[k] = v end -- Update all format keys
+        if f and (not state.threshold or f.threshold <= state.threshold) then
+            state.threshold = f.threshold 
+            state.step = f.step
+            state.rounding = f.rounding
+            state.min = f.min
+            state.max = f.max
+            state.format = f.format
+            state.components = f.components
+            
             j = j + 1
         end
 
         -- 3. Save a "snapshot" of the current state
         breakpoints[#breakpoints + 1] = {
-            threshold  = threshold,
-            step       = state.step,
-            rounding   = state.rounding,
-            min        = state.min,
-            max        = state.max,
-            format     = state.color and state.color:WrapTextInColorCode(state.format) or state.format,
+            threshold = state.threshold,
+            step = state.step,
+            rounding = state.rounding,
+            min = state.min,
+            max = state.max,
+            format = state.color and state.color:WrapTextInColorCode(state.format) or state.format,
             components = state.components
         }
     end
