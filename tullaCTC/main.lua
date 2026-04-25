@@ -64,7 +64,6 @@ local function onCooldownStart(cooldown)
         cooldown:HookScript("OnShow", onCooldownShow)
         cooldown:HookScript("OnHide", onCooldownHide)
         cooldown:HookScript('OnSizeChanged', onCooldownSizeChanged)
-        cooldown:GetCountdownFontString():SetSmoothScaling(true)
 
         cooldown.tullaCTC = true
     end
