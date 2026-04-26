@@ -313,16 +313,14 @@ local function buildThemeContent(scrollChild, theme)
         default = 3,
     })
 
-    if 120005 <= (select(4, GetBuildInfo())) then
-        add("AddSlider", {
-            property = 'tenthsThreshold',
-            name = L.TenthsThreshold,
-            desc = L.TenthsThresholdDesc,
-            min = 0,
-            max = 60,
-            default = 0,
-        })
-    end
+    add("AddSlider", {
+        property = 'tenthsThreshold',
+        name = L.TenthsThreshold,
+        desc = L.TenthsThresholdDesc,
+        min = 0,
+        max = 60,
+        default = 0,
+    })
 
     add("AddSlider", {
         property = 'abbrevThreshold',

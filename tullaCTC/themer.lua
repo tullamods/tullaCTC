@@ -99,54 +99,51 @@ local function getFormatBreakpoints(config)
         end
     end
 
-    local prevThreshold = points[#points].threshold
-
     local mmssThreshold = config.abbrevThreshold or 0
-    if mmssThreshold > prevThreshold then
+    if mmssThreshold >= MINUTE then
         tinsert(points, {
-            threshold = mmssThreshold,
+            threshold = config.minutesThreshold,
             format = '%d:%02d',
-            components = { { div = MINUTE } , { mod = MINUTE, rounding = roundingMode, step = 1 } },
+            rounding = roundingMode,
+            step = 1,
+            components = { { div = MINUTE } , { mod = MINUTE } },
         })
 
-        prevThreshold = points[#points].threshold
-    end
-
-    local minutesThreshold = config.minutesThreshold or 0
-    if minutesThreshold > prevThreshold then
         tinsert(points, {
-            threshold = minutesThreshold,
+            threshold = mmssThreshold,
             format = '%dm',
             components = { { div = MINUTE, rounding = roundingMode, step = 1 } },
         })
-
-        prevThreshold = points[#points].threshold
+    else
+        tinsert(points, {
+            threshold = config.minutesThreshold,
+            format = '%dm',
+            components = { { div = MINUTE, rounding = roundingMode, step = 1 } },
+        })
     end
 
+    local minutesThreshold = points[#points].threshold
+
     local hoursThreshold = config.hoursThreshold or 0
-    if hoursThreshold > prevThreshold then
+    if hoursThreshold > minutesThreshold then
         tinsert(points, {
             threshold = hoursThreshold,
             format = '%dh',
             components = { { div = HOUR, rounding = roundingMode, step = 1 } },
         })
-
-        prevThreshold = points[#points].threshold
     end
 
     local daysThreshold = config.daysThreshold or 0
-    if daysThreshold > prevThreshold then
+    if daysThreshold > hoursThreshold then
         tinsert(points, {
             threshold = daysThreshold,
             format = '%dd',
             components = { { div = DAY, rounding = roundingMode, step = 1 } },
         })
-
-        prevThreshold = points[#points].threshold
     end
 
     local weeksThreshold = config.weeksThreshold or 0
-    if weeksThreshold > prevThreshold then
+    if weeksThreshold > daysThreshold then
         tinsert(points, {
             threshold = weeksThreshold,
             format = '%dw',
@@ -203,38 +200,38 @@ local function createBreakpoints(colors, formats)
 
     while colors[i] or formats[j] do
         local c, f = colors[i], formats[j]
+        local threshold
 
-        -- 1. Process Color if it's next (or ties with format)
         if c and (not f or c.threshold <= f.threshold) then
-            state.threshold = c.threshold
+            threshold = c.threshold
+
             state.color = c.color
-            
+
             i = i + 1
         end
 
-        -- 2. Process Format if it's next (or ties with color)
-        if f and (not state.threshold or f.threshold <= state.threshold) then
-            state.threshold = f.threshold 
+        if f and (not threshold or f.threshold <= threshold) then
+            threshold = f.threshold
+
             state.step = f.step
             state.rounding = f.rounding
             state.min = f.min
             state.max = f.max
             state.format = f.format
             state.components = f.components
-            
+
             j = j + 1
         end
 
-        -- 3. Save a "snapshot" of the current state
-        breakpoints[#breakpoints + 1] = {
-            threshold = state.threshold,
+        tinsert(breakpoints, {
+            threshold = threshold,
             step = state.step,
             rounding = state.rounding,
             min = state.min,
             max = state.max,
             format = state.color and state.color:WrapTextInColorCode(state.format) or state.format,
             components = state.components
-        }
+        })
     end
 
     return breakpoints
