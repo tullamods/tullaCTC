@@ -1,4 +1,4 @@
-## Interface: 120005
+## Interface: 120005, 50504
 ## Title: tullaCTC
 ## Notes: Cooldown Text Customizer
 ## Author: Tuller

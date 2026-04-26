@@ -38,30 +38,36 @@ Addon:RegisterRule {
 -- Blizzard Cooldown Manager
 --------------------------------------------------------------------------------
 
--- cooldown manager
-Addon:RegisterRule {
-    id = "blizzard_cdm_essential",
-    priority = 200,
-    match = { "^EssentialCooldownViewer" }
-}
+EventUtil.ContinueOnAddOnLoaded("Blizzard_CooldownViewer", function()
+    -- cooldown manager
+    Addon:RegisterRule {
+        id = "blizzard_cdm_essential",
+        priority = 200,
+        displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_ESSENTIAL_COOLDOWNS),
+        match = { "^EssentialCooldownViewer" }
+    }
 
-Addon:RegisterRule {
-    id = "blizzard_cdm_utility",
-    priority = 210,
-    match = { "^UtilityCooldownViewer" }
-}
+    Addon:RegisterRule {
+        id = "blizzard_cdm_utility",
+        priority = 210,
+        displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_UTILITY_COOLDOWNS),
+        match = { "^UtilityCooldownViewer" }
+    }
 
-Addon:RegisterRule {
-    id = "blizzard_cdm_buff_icons",
-    priority = 220,
-    match = { "^BuffIconCooldownViewer" }
-}
+    Addon:RegisterRule {
+        id = "blizzard_cdm_buff_icons",
+        priority = 220,
+        displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFFS),
+        match = { "^BuffIconCooldownViewer" }
+    }
 
-Addon:RegisterRule {
-    id = "blizzard_cdm_buff_bars",
-    priority = 230,
-    match = { "^BuffBarCooldownViewer" }
-}
+    Addon:RegisterRule {
+        id = "blizzard_cdm_buff_bars",
+        priority = 230,
+        displayName = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFF_BARS),
+        match = { "^BuffBarCooldownViewer" }
+    }
+end)
 
 --------------------------------------------------------------------------------
 -- Secondary Bars
@@ -151,12 +157,15 @@ Addon:RegisterRule {
 --------------------------------------------------------------------------------
 -- Encounter Stuff
 --------------------------------------------------------------------------------
----
-Addon:RegisterRule {
-    id = "blizzard_encounter_timeline",
-    priority = 500,
-    match = { "^EncounterTimeline" }
-}
+
+EventUtil.ContinueOnAddOnLoaded("Blizzard_EncounterTimeline", function()
+    Addon:RegisterRule {
+        id = "blizzard_encounter_timeline",
+        priority = 500,
+        displayName = HUD_EDIT_MODE_SYSTEM_ENCOUNTER_TIMELINE,
+        match = { "^EncounterTimeline" }
+    }
+end)
 
 --------------------------------------------------------------------------------
 -- Other Stuff

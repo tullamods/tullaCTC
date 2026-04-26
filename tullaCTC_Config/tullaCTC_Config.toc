@@ -1,4 +1,4 @@
-## Interface: 120005, 120001
+## Interface: 120005, 50504
 ## Title: tullaCTC Config
 ## Notes: tullaCTC's configuration menu
 ## Author: Tuller

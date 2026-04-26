@@ -113,10 +113,6 @@ L.Theme_none= NONE
 L.Rule_action = 'Action Buttons'
 L.Rule_action_charge = 'Action Buttons - Recharging'
 L.Rule_action_loc = 'Action Buttons - Loss of Control'
-L.Rule_blizzard_cdm_essential = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_ESSENTIAL_COOLDOWNS)
-L.Rule_blizzard_cdm_utility = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_UTILITY_COOLDOWNS)
-L.Rule_blizzard_cdm_buff_icons = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFFS)
-L.Rule_blizzard_cdm_buff_bars = strjoin(' - ', COOLDOWN_VIEWER_LABEL, HUD_EDIT_MODE_SYSTEM_TRACKED_BUFF_BARS)
 L.Rule_blizzard_petbar = HUD_EDIT_MODE_PET_ACTION_BAR_LABEL
 L.Rule_blizzard_stancebar = HUD_EDIT_MODE_STANCE_BAR_LABEL
 L.Rule_blizzard_possessbar = HUD_EDIT_MODE_POSSESS_ACTION_BAR_LABEL
@@ -130,7 +126,6 @@ L.Rule_blizzard_pet = HUD_EDIT_MODE_PET_FRAME_LABEL
 L.Rule_blizzard_party = HUD_EDIT_MODE_PARTY_FRAMES_LABEL
 L.Rule_blizzard_raid = HUD_EDIT_MODE_RAID_FRAMES_LABEL
 L.Rule_blizzard_arena = HUD_EDIT_MODE_ARENA_FRAMES_LABEL
-L.Rule_blizzard_encounter_timeline = HUD_EDIT_MODE_SYSTEM_ENCOUNTER_TIMELINE
 L.Rule_everything = 'Everything Else'
 
 -- Profiles
