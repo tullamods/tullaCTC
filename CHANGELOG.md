@@ -1,5 +1,10 @@
 # tullaCTC Version History
 
+## v12.0.8
+
+* Fixed MM:SS calculations
+* Disabled smooth scaling on text
+
 ## v12.0.7
 
 * Fixed some issues with the new rounding options
