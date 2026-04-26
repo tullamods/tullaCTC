@@ -47,7 +47,6 @@ local function onCooldownSizeChanged(cooldown, width)
     local scale, alpha = 1, 1
 
     if theme and canaccessvalue(width) and width > 0 then
-
         scale = theme.scaleText and (Round(width) / SCALE_BASE) or 1
         alpha = Round(scale * 100) >= Round(theme.minScale * 100) and 1 or 0
     end
@@ -180,7 +179,7 @@ function Addon:OnLoad()
     end))
 
     hooksecurefunc('CooldownFrame_SetDisplayAsPercentage', function(cooldown)
-        if issecretvalue(cooldown) or cooldown.noCooldownCount then return end
+        if cooldown.noCooldownCount then return end
 
         cooldown.noCooldownCount = true
         cooldown:SetHideCountdownNumbers(true)
@@ -240,7 +239,6 @@ function Addon:GetDBDefaults()
                     drawSwipe = "default",
                     drawText = "default",
                     reverse = "default",
-                    useAuraDisplayTime = "default",
 
                     -- cooldown text font settings
                     -- font is a LSM font ID
