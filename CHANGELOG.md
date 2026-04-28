@@ -1,5 +1,9 @@
 # tullaCTC Version History
 
+## v12.0.10
+
+* Fixed rounding issues for tenths of seconds
+
 ## v12.0.9
 
 * Added support for World of Warcraft 5.5.4 (Mists PTR)

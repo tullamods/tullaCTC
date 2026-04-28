@@ -35,7 +35,7 @@ local function getFormatBreakpoints(config)
             threshold = 0,
             format = '%.1f',
             rounding = roundingMode,
-            step = 1
+            step = 0.1
         })
 
         tinsert(points, {
