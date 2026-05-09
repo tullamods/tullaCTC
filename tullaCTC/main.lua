@@ -8,6 +8,14 @@ local active = {}
 local textContainers = {}
 local SCALE_BASE = Round(ActionButton1.cooldown:GetWidth())
 
+-- integer id generation to give us a stable not secret identifier
+-- we can use for the active table
+local nextid
+do
+    local id = 0
+    nextid = function() id = id + 1; return id; end
+end
+
 -- themer function cache
 local themers = setmetatable({}, {
     __index = function(self, key)
@@ -20,7 +28,7 @@ local themers = setmetatable({}, {
 })
 
 local function getTheme(cooldown)
-    if issecretvalue(cooldown) or cooldown.noCooldownCount then return end
+    if cooldown.noCooldownCount then return end
 
     local themeName = Addon:GetThemeName(cooldown)
     local theme = Addon.db.profile.themes[themeName]
@@ -28,18 +36,6 @@ local function getTheme(cooldown)
     if theme.enabled then
         return theme
     end
-end
-
-local function onCooldownShow(cooldown)
-    if issecretvalue(cooldown) then return end
-
-    active[cooldown] = true
-end
-
-local function onCooldownHide(cooldown)
-    if issecretvalue(cooldown) then return end
-
-    active[cooldown] = nil
 end
 
 local function onCooldownSizeChanged(cooldown, width)
@@ -56,15 +52,25 @@ local function onCooldownSizeChanged(cooldown, width)
     fs:SetScale(scale)
 end
 
+local function onCooldownStop(cooldown)
+    local cooldownID = cooldown.tullaCTC
+    if cooldownID then
+        active[cooldownID] = nil
+    end
+end
+
 local function onCooldownStart(cooldown)
-    if issecretvalue(cooldown) or cooldown.noCooldownCount then return end
+    if cooldown.noCooldownCount then
+        onCooldownStop(cooldown)
+        return
+    end
 
-    if not cooldown.tullaCTC then
-        cooldown:HookScript("OnShow", onCooldownShow)
-        cooldown:HookScript("OnHide", onCooldownHide)
+    local cooldownID = cooldown.tullaCTC
+    if cooldownID == nil then
+        cooldownID = nextid()
+        cooldown.tullaCTC = cooldownID
         cooldown:HookScript('OnSizeChanged', onCooldownSizeChanged)
-
-        cooldown.tullaCTC = true
+        cooldown:HookScript('OnCooldownDone', onCooldownStop)
     end
 
     -- HACK: cooldown text appears below action button hotkey and count text
@@ -72,7 +78,7 @@ local function onCooldownStart(cooldown)
     -- level than the base text overlay container
     local parent = cooldown:GetParent()
     if parent and parent.TextOverlayContainer and not InCombatLockdown() then
-        local container = textContainers[cooldown]
+        local container = textContainers[cooldownID]
         if not container then
             container = CreateFrame('Frame', nil, cooldown)
 
@@ -80,13 +86,13 @@ local function onCooldownStart(cooldown)
             container:SetFrameLevel(777)
             cooldown:GetCountdownFontString():SetParent(container)
 
-            textContainers[cooldown] = container
+            textContainers[cooldownID] = container
         end
     end
 
     themers[Addon:GetThemeName(cooldown)](cooldown)
     onCooldownSizeChanged(cooldown, cooldown:GetWidth())
-    active[cooldown] = cooldown:IsVisible()
+    active[cooldownID] = cooldown
 end
 
 function Addon:OnLoad()
@@ -116,6 +122,7 @@ function Addon:OnLoad()
     hooksecurefunc(CooldownMT, 'SetCooldownFromDurationObject', onCooldownStart)
     hooksecurefunc(CooldownMT, 'SetCooldownFromExpirationTime', onCooldownStart)
     hooksecurefunc(CooldownMT, 'SetCooldownUNIX', onCooldownStart)
+    hooksecurefunc(CooldownMT, 'Clear', onCooldownStop)
 
     -- setup enforcers (hooks that apply our settings)
     local function lock(func)
@@ -378,7 +385,7 @@ do
     local function restyleCooldowns()
         wipe(themers)
 
-        for cooldown in pairs(active) do
+        for _, cooldown in pairs(active) do
             local themeName = Addon:GetThemeName(cooldown)
             local func = themers[themeName]
 
