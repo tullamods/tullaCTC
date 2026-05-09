@@ -1,5 +1,10 @@
 # tullaCTC Version History
 
+## v12.1.0
+
+* Added support for World of Warcraft 12.0.7 (Retail PTR)
+* Adjusted active cooldown frame handling to hopefully better handle secret frames
+
 ## v12.0.10
 
 * Fixed rounding issues for tenths of seconds
