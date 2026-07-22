@@ -1,4 +1,4 @@
-## Interface: 120007, 50504, 20506
+## Interface: 120007, 50504, 20506, 11509
 ## Title: tullaCTC Config
 ## Notes: tullaCTC's configuration menu
 ## Author: Tuller

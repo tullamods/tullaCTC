@@ -1,5 +1,9 @@
 # tullaCTC Version History
 
+## v12.1.2
+
+* Added support for World of Warcraft 1.15.9 (Vanilla)
+
 ## v12.1.1
 
 * Added support for World of Warcraft 2.5.6 (Burning Crusade Classic)
