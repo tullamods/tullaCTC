@@ -1,11 +1,31 @@
 ## Interface: 120007, 50504, 20506, 11509
 ## Title: tullaCTC
 ## Notes: Cooldown Text Customizer
+## Notes-deDE: Anpassung der Abklingzeit-Texte
+## Notes-esES: Personalizador del texto del tiempo de reutilización
+## Notes-esMX: Personalizador del texto del tiempo de reutilización
+## Notes-frFR: Personnalisation du texte des temps de recharge
+## Notes-itIT: Personalizzazione del testo dei tempi di recupero
+## Notes-koKR: 재사용 대기시간 텍스트 사용자 지정
+## Notes-ptBR: Personalizador do texto do tempo de recarga
+## Notes-ruRU: Настройка текста времени восстановления
+## Notes-zhCN: 冷却时间文字自定义
+## Notes-zhTW: 冷卻時間文字自訂
 ## Author: Tuller
 ## Version: @project-version@
 ## SavedVariables: tullaCTCDB
 ## IconTexture: Interface/Icons/inv_misc_pocketwatch_02
-## Category: Combat
+## Category-enUS: Combat
+## Category-deDE: Kampf
+## Category-esES: Combate
+## Category-esMX: Combate
+## Category-frFR: Combat
+## Category-itIT: Combattimento
+## Category-koKR: 전투
+## Category-ptBR: Combate
+## Category-ruRU: Бой
+## Category-zhCN: 战斗
+## Category-zhTW: 戰鬥
 embeds.xml
 api.lua
 utils.lua
