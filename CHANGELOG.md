@@ -1,5 +1,9 @@
 # tullaCTC Version History
 
+## v12.1.3
+
+* Update TOCs for World of Warcraft 12.1.0
+
 ## v12.1.2
 
 * Added support for World of Warcraft 1.15.9 (Vanilla)
