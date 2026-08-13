@@ -1,6 +1,16 @@
 ## Interface: 120100, 50504, 20506, 11509
 ## Title: tullaCTC Config
 ## Notes: tullaCTC's configuration menu
+## Notes-deDE: Konfigurationsmenü von tullaCTC
+## Notes-esES: Menú de configuración de tullaCTC
+## Notes-esMX: Menú de configuración de tullaCTC
+## Notes-frFR: Menu de configuration de tullaCTC
+## Notes-itIT: Menu di configurazione di tullaCTC
+## Notes-koKR: tullaCTC의 설정 메뉴
+## Notes-ptBR: Menu de configuração do tullaCTC
+## Notes-ruRU: Меню конфигурации tullaCTC
+## Notes-zhCN: tullaCTC 的配置菜单
+## Notes-zhTW: tullaCTC 的設定選單
 ## Author: Tuller
 ## Dependencies: tullaCTC
 ## LoadOnDemand: 1
