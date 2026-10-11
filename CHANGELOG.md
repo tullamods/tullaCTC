@@ -1,5 +1,9 @@
 # tullaCTC Version History
 
+## v12.1.4
+
+* Update TOCs for World of Warcraft Forever
+
 ## v12.1.3
 
 * Update TOCs for World of Warcraft 12.1.0

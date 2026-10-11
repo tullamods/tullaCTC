@@ -13,7 +13,9 @@ local SCALE_BASE = Round(ActionButton1.cooldown:GetWidth())
 local nextid
 do
     local id = 0
-    nextid = function() id = id + 1; return id; end
+    nextid = function()
+        id = id + 1; return id;
+    end
 end
 
 -- themer function cache
@@ -28,6 +30,7 @@ local themers = setmetatable({}, {
 })
 
 local function getTheme(cooldown)
+    if issecretvalue(cooldown) then return end
     if cooldown.noCooldownCount then return end
 
     local themeName = Addon:GetThemeName(cooldown)
@@ -60,6 +63,8 @@ local function onCooldownStop(cooldown)
 end
 
 local function onCooldownStart(cooldown)
+    if issecretvalue(cooldown) then return end
+
     if cooldown.noCooldownCount then
         onCooldownStop(cooldown)
         return
@@ -160,9 +165,7 @@ function Addon:OnLoad()
 
     hooksecurefunc(CooldownMT, 'SetSwipeColor', lock(function(cooldown, r, g, b, a)
         local theme = getTheme(cooldown)
-        if not (theme and theme.themeCooldown and theme.themeSwipeColor) then
-            return
-        end
+        if not (theme and theme.themeCooldown and theme.themeSwipeColor) then return end
 
         local cR, cG, cB, cA = Addon.HexToRGBA(theme.swipeColor)
         if issecretvalue(r) or not (r == cR and g == cG and b == cB and a == cA) then
@@ -202,7 +205,7 @@ function Addon:OnLoad()
     end
 
     if AddonCompartmentFrame then
-        AddonCompartmentFrame:RegisterAddon{
+        AddonCompartmentFrame:RegisterAddon {
             text = C_AddOns.GetAddOnMetadata(AddonName, "Title"),
             icon = C_AddOns.GetAddOnMetadata(AddonName, "IconTexture"),
             func = showOptionsFrame,
